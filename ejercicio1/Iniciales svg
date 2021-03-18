@@ -5,15 +5,17 @@
       <stop offset="100%" style="stop-color:rgb(255,50,10);stop-opacity:1" />
     </linearGradient>
   </defs>
-  <ellipse cx="200" cy="70" rx="200" ry="75" fill="url(#grad1)" transform="translate(0, 50)"/>
-  <path id="lineF" d="M -50 350 l 150 -300 l 100 0 M 75 100 l 80 0" stroke="red"
-  stroke-width="4" fill="none" />
-  <path id="lineM" d="M 100 300 l 100 -250 l 15 130 l 15 -130 L 300 250 " stroke="blue"
-  stroke-width="4" fill="none"/>
-  <path id="lineR" d="M 280 250 L 280 50 C320 50 320 140 283 120 " stroke="black"
-  stroke-width="5" fill="blueviolet"/>
-  <path id="lineR2" d="M 283 120 l 50 80" stroke="black"
-  stroke-width="5" />
   
+  <ellipse cx="200" cy="70" rx="200" ry="75" fill="url(#grad1)" transform="translate(0, 50)"/>
+  <line x1="0" x2="400" y1="80" y2="80" stroke-width="4" stroke="white" transform="rotate(13)" />
+  <line x1="0" x2="400" y1="160" y2="80" stroke-width="4" stroke="white" transform="rotate(13)"/>
+  <path id="lineF" d="M -50 350 l 150 -300 l 100 0 M 75 100 l 80 0" stroke="red"
+  stroke-width="8" fill="none" />
+  <path id="lineM" d="M 100 300 l 100 -250 l 15 130 l 15 -130 L 300 250 " stroke="blue"
+  stroke-width="8" fill="none"/>
+  <path id="lineR" d="M 280 250 L 280 50 C320 50 320 140 283 120 " stroke="black"
+  stroke-width="8" fill="blueviolet"/>
+  <path id="lineR2" d="M 283 120 l 50 80" stroke="black"
+  stroke-width="8" />
 </svg>
     
