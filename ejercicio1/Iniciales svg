@@ -7,6 +7,7 @@
   </defs>
   
   <ellipse cx="200" cy="70" rx="200" ry="75" fill="url(#grad1)" transform="translate(0, 50)"/>
+  <polygon points="0, 0 25,30 50,0 " transform="translate(386, 95) rotate(90)" />
   <line x1="0" x2="400" y1="80" y2="80" stroke-width="4" stroke="white" transform="rotate(13)" />
   <line x1="0" x2="400" y1="160" y2="80" stroke-width="4" stroke="white" transform="rotate(13)"/>
   <path id="lineF" d="M -50 350 l 150 -300 l 100 0 M 75 100 l 80 0" stroke="red"
@@ -18,4 +19,3 @@
   <path id="lineR2" d="M 283 120 l 50 80" stroke="black"
   stroke-width="8" />
 </svg>
-    
