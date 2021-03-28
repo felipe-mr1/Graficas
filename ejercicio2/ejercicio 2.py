@@ -251,10 +251,10 @@ def create_sky(y0, y1):
     # Defining the location and colors of each vertex  of the shape
     vertices = [
     #   positions        colors
-        -1.0, y0, 0.0,  0.0, 1.0, 1.0,
-         1.0, y0, 0.0,  0.0, 1.0, 1.0,
-         1.0, y1, 0.0,  0.8, 1.0, 1.0,
-        -1.0, y1, 0.0,  0.8, 1.0, 1.0]
+        -1.0, y0, 0.0,  0.0, 0.0, 0.36,
+         1.0, y0, 0.0,  0.0, 0.0, 0.36,
+         1.0, y1, 0.0,  0.0, 0.36, 0.5,
+        -1.0, y1, 0.0,  0.0, 0.36, 0.5]
 
     # Defining connections among vertices
     # We have a triangle every 3 indices specified
@@ -263,15 +263,15 @@ def create_sky(y0, y1):
 
     return Shape(vertices, indices)
 
-def create_ocean(y0, y1):
+def create_terrain(y0, y1):
 
     # Defining the location and colors of each vertex  of the shape
     vertices = [
     #   positions        colors
-        -1.0, y0, 0.0,  0.0, 0.0, 0.5,
-         1.0, y0, 0.0,  0.0, 0.0, 0.5,
-         1.0, y1, 0.0,  0.2, 0.4, 1.0,
-        -1.0, y1, 0.0,  0.2, 0.4, 1.0]
+        -1.0, y0, 0.0,  0.34, 0.34, 0.34,
+         1.0, y0, 0.0,  0.34, 0.34, 0.34,
+         1.0, y1, 0.0,  0.67, 0.67, 0.67,
+        -1.0, y1, 0.0,  0.67, 0.67, 0.67]
 
     # Defining connections among vertices
     # We have a triangle every 3 indices specified
@@ -384,6 +384,28 @@ def create_star():
     indices = [0,1,2,3,4,5]
     return Shape(vertices, indices)
 
+def create_forest():
+    vertices=[
+        -0.7, -0.4, 0, 6/255, 74/255, 6/255,
+        -0.64, -0.4, 0, 6/255, 74/255, 6/255,
+        -0.67, -0.3, 0, 6/255, 74/255, 6/255,
+
+        0.7, -0.4, 0, 6/255, 74/255, 6/255,
+        0.64, -0.4, 0, 6/255, 74/255, 6/255,
+        0.67, -0.3, 0, 6/255, 74/255, 6/255,
+
+        0, -0.3, 0, 6/255, 74/255, 6/255,
+        0.06, -0.3, 0, 6/255, 74/255, 6/255,
+        0.03, -0.2, 0, 6/255, 74/255, 6/255,
+
+        0, -0.6, 0, 6/255, 74/255, 6/255,
+        0.06, -0.6, 0, 6/255, 74/255, 6/255,
+        0.03, -0.5, 0, 6/255, 74/255, 6/255,
+    ]
+    indices = [0,1,2,3,4,5,6,7,8,9,10,11]
+    return Shape(vertices, indices)
+
+
 if __name__ == "__main__":
 
     # Initialize glfw
@@ -417,12 +439,12 @@ if __name__ == "__main__":
     sunsetPipeline.setupVAO(gpu_sky)
     gpu_sky.fillBuffers(sky_shape.vertices, sky_shape.indices, GL_STATIC_DRAW)
 
-    ocean_shape = create_ocean(y0=-1.0, y1=-0.2)
-    gpu_ocean = GPUShape().initBuffers()
-    simplePipeline.setupVAO(gpu_ocean)
-    greenPipeline.setupVAO(gpu_ocean)
-    sunsetPipeline.setupVAO(gpu_ocean)
-    gpu_ocean.fillBuffers(ocean_shape.vertices, ocean_shape.indices, GL_STATIC_DRAW)
+    terrain_shape = create_terrain(y0=-1.0, y1=-0.2)
+    gpu_terrain = GPUShape().initBuffers()
+    simplePipeline.setupVAO(gpu_terrain)
+    greenPipeline.setupVAO(gpu_terrain)
+    sunsetPipeline.setupVAO(gpu_terrain)
+    gpu_terrain.fillBuffers(terrain_shape.vertices, terrain_shape.indices, GL_STATIC_DRAW)
 
     island_shape = create_island(x0=-0.8, y0=-0.2, width=1.6, height=0.4)
     gpu_island = GPUShape().initBuffers()
@@ -459,6 +481,13 @@ if __name__ == "__main__":
     sunsetPipeline.setupVAO(gpu_star)
     gpu_star.fillBuffers(star_shape.vertices, star_shape.indices, GL_STATIC_DRAW)
 
+    forest_shape = create_forest()
+    gpu_forest = GPUShape().initBuffers()
+    simplePipeline.setupVAO(gpu_forest)
+    greenPipeline.setupVAO(gpu_forest)
+    sunsetPipeline.setupVAO(gpu_forest)
+    gpu_forest.fillBuffers(forest_shape.vertices, forest_shape.indices, GL_STATIC_DRAW)
+
 
     # Setting up the clear screen color
     glClearColor(0.2, 0.2, 0.2, 1.0)
@@ -479,41 +508,45 @@ if __name__ == "__main__":
         if (controller.effect1):
             glUseProgram(greenPipeline.shaderProgram)
             greenPipeline.drawCall(gpu_sky)
-            greenPipeline.drawCall(gpu_ocean)
+            greenPipeline.drawCall(gpu_terrain)
             greenPipeline.drawCall(gpu_island)
             greenPipeline.drawCall(gpu_volcano)
             greenPipeline.drawCall(gpu_moon)
             greenPipeline.drawCall(gpu_cross)
             greenPipeline.drawCall(gpu_star)
+            greenPipeline.drawCall(gpu_forest)
         elif (controller.effect2):
             glUseProgram(sunsetPipeline.shaderProgram)
             sunsetPipeline.drawCall(gpu_sky)
-            sunsetPipeline.drawCall(gpu_ocean)
+            sunsetPipeline.drawCall(gpu_terrain)
             sunsetPipeline.drawCall(gpu_island)
             sunsetPipeline.drawCall(gpu_volcano)
             sunsetPipeline.drawCall(gpu_moon)
             sunsetPipeline.drawCall(gpu_cross)
             sunsetPipeline.drawCall(gpu_star)
+            sunsetPipeline.drawCall(gpu_forest)
         else:
             glUseProgram(simplePipeline.shaderProgram)
             simplePipeline.drawCall(gpu_sky)
-            simplePipeline.drawCall(gpu_ocean)
+            simplePipeline.drawCall(gpu_terrain)
             simplePipeline.drawCall(gpu_island)
             simplePipeline.drawCall(gpu_volcano)
             simplePipeline.drawCall(gpu_moon)
             simplePipeline.drawCall(gpu_cross)
             simplePipeline.drawCall(gpu_star)
+            simplePipeline.drawCall(gpu_forest)
 
         # Once the render is done, buffers are swapped, showing only the complete scene.
         glfw.swap_buffers(window)
 
     # freeing GPU memory
     gpu_sky.clear()
-    gpu_ocean.clear()
+    gpu_terrain.clear()
     gpu_island.clear()
     gpu_volcano.clear()
     gpu_moon.clear()
     gpu_cross.clear()
     gpu_star.clear()
+    gpu_forest.clear()
 
     glfw.terminate()
