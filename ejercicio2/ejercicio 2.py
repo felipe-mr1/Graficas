@@ -405,6 +405,19 @@ def create_forest():
     indices = [0,1,2,3,4,5,6,7,8,9,10,11]
     return Shape(vertices, indices)
 
+def create_lake():
+    vertices=[
+        -0.6, -0.35, 0, 54/255, 113/255, 113/255,
+        0.6, -0.35, 0, 54/255, 113/255, 113/255,
+        0.6, -0.45, 0, 54/255, 113/255, 113/255,
+
+        0.6, -0.45, 0, 54/255, 113/255, 113/255,
+        -0.6, -0.45, 0, 54/255, 113/255, 113/255,
+        -0.6, -0.35, 0, 54/255, 113/255, 113/255,
+    ]
+    indices = [0,1,2,3,4,5]
+    return Shape(vertices, indices)
+
 
 if __name__ == "__main__":
 
@@ -488,6 +501,13 @@ if __name__ == "__main__":
     sunsetPipeline.setupVAO(gpu_forest)
     gpu_forest.fillBuffers(forest_shape.vertices, forest_shape.indices, GL_STATIC_DRAW)
 
+    lake_shape = create_lake()
+    gpu_lake = GPUShape().initBuffers()
+    simplePipeline.setupVAO(gpu_lake)
+    greenPipeline.setupVAO(gpu_lake)
+    sunsetPipeline.setupVAO(gpu_lake)
+    gpu_lake.fillBuffers(lake_shape.vertices, lake_shape.indices, GL_STATIC_DRAW)
+
 
     # Setting up the clear screen color
     glClearColor(0.2, 0.2, 0.2, 1.0)
@@ -515,6 +535,7 @@ if __name__ == "__main__":
             greenPipeline.drawCall(gpu_cross)
             greenPipeline.drawCall(gpu_star)
             greenPipeline.drawCall(gpu_forest)
+            greenPipeline.drawCall(gpu_lake)
         elif (controller.effect2):
             glUseProgram(sunsetPipeline.shaderProgram)
             sunsetPipeline.drawCall(gpu_sky)
@@ -525,6 +546,7 @@ if __name__ == "__main__":
             sunsetPipeline.drawCall(gpu_cross)
             sunsetPipeline.drawCall(gpu_star)
             sunsetPipeline.drawCall(gpu_forest)
+            sunsetPipeline.drawCall(gpu_lake)
         else:
             glUseProgram(simplePipeline.shaderProgram)
             simplePipeline.drawCall(gpu_sky)
@@ -535,6 +557,7 @@ if __name__ == "__main__":
             simplePipeline.drawCall(gpu_cross)
             simplePipeline.drawCall(gpu_star)
             simplePipeline.drawCall(gpu_forest)
+            simplePipeline.drawCall(gpu_lake)
 
         # Once the render is done, buffers are swapped, showing only the complete scene.
         glfw.swap_buffers(window)
@@ -548,5 +571,6 @@ if __name__ == "__main__":
     gpu_cross.clear()
     gpu_star.clear()
     gpu_forest.clear()
+    gpu_lake.clear()
 
     glfw.terminate()
