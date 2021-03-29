@@ -124,7 +124,8 @@ class GreenShaderProgram:
             out vec3 newColor;
             void main()
             {
-                gl_Position = vec4(position, 1.0f);
+                vec3 newPos = vec3(position[0]/-1, position[1]/-1, position[2]/-1);
+                gl_Position = vec4(newPos, 1.0f);
                 newColor = color;
             }
             """
@@ -136,13 +137,7 @@ class GreenShaderProgram:
             out vec4 outColor;
             void main()
             {
-                float grayColor = (newColor.r + newColor.g + newColor.b) / 3.0;
-                vec3 finalColor = newColor;
-                if (newColor.g < newColor.r +0.1|| newColor.g < newColor.b +0.1)
-                {
-                    finalColor = vec3(grayColor, grayColor, grayColor);
-                }
-                outColor = vec4(finalColor, 1.0f);
+                outColor = vec4(newColor, 1.0f);
             }
             """
 
@@ -280,30 +275,7 @@ def create_terrain(y0, y1):
 
     return Shape(vertices, indices)
 
-def create_island(x0, y0, width, height):
 
-    # Defining the location and colors of each vertex  of the shape
-    vertices = [
-    #   positions                           colors
-         x0,         y0,               0.0,  0.63, 0.25, 0.0,
-         x0 + width/2,  y0 - height,      0.0,  0.63, 0.25, 0.0,
-         x0 + width/2,  y0 - height *0.4, 0.0,  0.63, 0.25, 0.0,
-
-         x0 + width/2,  y0 - height,      0.0,  0.9, 0.49, 0.13,
-         x0 + width, y0,               0.0,  0.9, 0.49, 0.13,
-         x0 + width/2,  y0 - height *0.4, 0.0,  0.9, 0.49, 0.13,
-
-         x0,         y0,               0.0,  0.0, 0.7, 0.0,
-         x0 + width/2,  y0 - height *0.4, 0.0,  0.1, 1.0, 0.0,
-         x0 + width, y0,               0.0,  0.0, 0.7, 0.0]
-
-    # Defining connections among vertices
-    # We have a triangle every 3 indices specified
-    indices =  [0, 1, 2,
-                3, 4, 5,
-                6, 7, 8]
-
-    return Shape(vertices, indices)
 
 def create_volcano(x0, y0, width, height):
 
@@ -352,34 +324,34 @@ def create_moon_and_star():
 
 def create_cross():
     vertices=[
-        0.5, 0.15, 0, 0, 1, 0,
-        0.65, 0.15, 0, 0, 1, 0, # triangulo vertical 1
-        0.65, 1, 0, 0, 1, 0,
+        0.5, 0.15, 0, 117/255, 117/255, 117/255,
+        0.65, 0.15, 0, 117/255, 117/255, 117/255, # triangulo vertical 1
+        0.65, 1, 0, 117/255, 117/255, 117/255,
 
-        0.65, 1, 0, 0, 1, 0,
-        0.5, 1, 0, 0, 1, 0, # triangulo vertical 2
-        0.5, 0.15, 0, 0, 1, 0,
+        0.65, 1, 0, 117/255, 117/255, 117/255,
+        0.5, 1, 0, 117/255, 117/255, 117/255, # triangulo vertical 2
+        0.5, 0.15, 0, 117/255, 117/255, 117/255,
 
-        0.25, 0.6, 0, 0, 1, 0,
-        0.25, 0.75, 0, 0, 1, 0,
-        0.9, 0.75, 0, 0, 1, 0,
+        0.25, 0.6, 0, 117/255, 117/255, 117/255,
+        0.25, 0.75, 0, 117/255, 117/255, 117/255,
+        0.9, 0.75, 0, 117/255, 117/255, 117/255,
 
-        0.9, 0.75, 0, 0, 1, 0,
-        0.9, 0.6, 0, 0, 1, 0,
-        0.25, 0.6, 0, 0, 1, 0
+        0.9, 0.75, 0, 117/255, 117/255, 117/255,
+        0.9, 0.6, 0, 117/255, 117/255, 117/255,
+        0.25, 0.6, 0, 117/255, 117/255, 117/255
     ]
     indices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     return Shape(vertices, indices)
 
 def create_star():
     vertices=[
-        -0.25, -0.75, 0, 0, 0, 1,
-        0.25, -0.75, 0, 0, 0, 1,
-        0, -0.32, 0, 0, 0, 1,
+        -0.25-0.7, -0.75-0.13, 0, 0, 0, 1,
+        0.25-0.7, -0.75-0.13, 0, 0, 0, 1,
+        0-0.7, -0.32-0.13, 0, 0, 0, 1,
 
-        -0.25, -0.53+ 0.09, 0, 0, 0, 1,
-        0.25, -0.53+ 0.09, 0, 0, 0, 1,
-        0, -0.96+ 0.09, 0, 0, 0, 1
+        -0.25-0.7, -0.53+ 0.09-0.13, 0, 0, 0, 1,
+        0.25-0.7, -0.53+ 0.09-0.13, 0, 0, 0, 1,
+        0-0.7, -0.96+ 0.09-0.13, 0, 0, 0, 1
     ]
     indices = [0,1,2,3,4,5]
     return Shape(vertices, indices)
@@ -459,12 +431,7 @@ if __name__ == "__main__":
     sunsetPipeline.setupVAO(gpu_terrain)
     gpu_terrain.fillBuffers(terrain_shape.vertices, terrain_shape.indices, GL_STATIC_DRAW)
 
-    island_shape = create_island(x0=-0.8, y0=-0.2, width=1.6, height=0.4)
-    gpu_island = GPUShape().initBuffers()
-    simplePipeline.setupVAO(gpu_island)
-    greenPipeline.setupVAO(gpu_island)
-    sunsetPipeline.setupVAO(gpu_island)
-    gpu_island.fillBuffers(island_shape.vertices, island_shape.indices, GL_STATIC_DRAW)
+    
 
     volcano_shape = create_volcano(x0=-0.3, y0=-0.22, width=0.6, height=0.4)
     gpu_volcano = GPUShape().initBuffers()
@@ -529,7 +496,7 @@ if __name__ == "__main__":
             glUseProgram(greenPipeline.shaderProgram)
             greenPipeline.drawCall(gpu_sky)
             greenPipeline.drawCall(gpu_terrain)
-            greenPipeline.drawCall(gpu_island)
+            
             greenPipeline.drawCall(gpu_volcano)
             greenPipeline.drawCall(gpu_moon)
             greenPipeline.drawCall(gpu_cross)
@@ -540,7 +507,7 @@ if __name__ == "__main__":
             glUseProgram(sunsetPipeline.shaderProgram)
             sunsetPipeline.drawCall(gpu_sky)
             sunsetPipeline.drawCall(gpu_terrain)
-            sunsetPipeline.drawCall(gpu_island)
+            
             sunsetPipeline.drawCall(gpu_volcano)
             sunsetPipeline.drawCall(gpu_moon)
             sunsetPipeline.drawCall(gpu_cross)
@@ -551,7 +518,7 @@ if __name__ == "__main__":
             glUseProgram(simplePipeline.shaderProgram)
             simplePipeline.drawCall(gpu_sky)
             simplePipeline.drawCall(gpu_terrain)
-            simplePipeline.drawCall(gpu_island)
+            
             simplePipeline.drawCall(gpu_volcano)
             simplePipeline.drawCall(gpu_moon)
             simplePipeline.drawCall(gpu_cross)
@@ -565,7 +532,7 @@ if __name__ == "__main__":
     # freeing GPU memory
     gpu_sky.clear()
     gpu_terrain.clear()
-    gpu_island.clear()
+    
     gpu_volcano.clear()
     gpu_moon.clear()
     gpu_cross.clear()
