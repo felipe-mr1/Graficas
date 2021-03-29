@@ -201,8 +201,22 @@ class SunsetShaderProgram:
             out vec4 outColor;
             void main()
             {   
-                vec3 finalColor = vec3((newColor.r + 0.4) , newColor.g + 0.2, newColor.b * 0.1 );
-                outColor = vec4(finalColor, 1.0f);
+                if(newColor.r > newColor.g && newColor.r > newColor.b)
+                {
+                    vec3 finalColor = vec3(newColor.r + (0.9-newColor.r), newColor.g+ 0.0, newColor.b+0.0);
+                    outColor = vec4(finalColor, 1.0f);
+                }
+                if(newColor.g > newColor.r && newColor.g > newColor.b)
+                {
+                    vec3 finalColor = vec3( newColor.r+ 0.0,newColor.g + 0.4, newColor.b+0.0);
+                    outColor = vec4(finalColor, 1.0f);
+                }
+                else
+                {
+                    vec3 finalColor = vec3( newColor.r+ 0.0, newColor.g+0.0,newColor.b + (0.9-newColor.b));
+                    outColor = vec4(finalColor, 1.0f);
+                }
+                
             }
             """
 
@@ -263,10 +277,10 @@ def create_terrain(y0, y1):
     # Defining the location and colors of each vertex  of the shape
     vertices = [
     #   positions        colors
-        -1.0, y0, 0.0,  0.34, 0.34, 0.34,
-         1.0, y0, 0.0,  0.34, 0.34, 0.34,
-         1.0, y1, 0.0,  0.67, 0.67, 0.67,
-        -1.0, y1, 0.0,  0.67, 0.67, 0.67]
+        -1.0, y0, 0.0,  66/255, 92/255, 11/255,
+         1.0, y0, 0.0,  66/255, 92/255, 11/255,
+         1.0, y1, 0.0,  88/255, 122/255, 15/255,
+        -1.0, y1, 0.0,  88/255, 122/255, 15/255]
 
     # Defining connections among vertices
     # We have a triangle every 3 indices specified
@@ -379,13 +393,13 @@ def create_forest():
 
 def create_lake():
     vertices=[
-        -0.6, -0.35, 0, 54/255, 113/255, 113/255,
-        0.6, -0.35, 0, 54/255, 113/255, 113/255,
-        0.6, -0.45, 0, 54/255, 113/255, 113/255,
+        -0.6, -0.35, 0, 54/255, 112/255, 113/255,
+        0.6, -0.35, 0, 54/255, 112/255, 113/255,
+        0.6, -0.45, 0, 54/255, 112/255, 113/255,
 
-        0.6, -0.45, 0, 54/255, 113/255, 113/255,
-        -0.6, -0.45, 0, 54/255, 113/255, 113/255,
-        -0.6, -0.35, 0, 54/255, 113/255, 113/255,
+        0.6, -0.45, 0, 54/255, 112/255, 113/255,
+        -0.6, -0.45, 0, 54/255, 112/255, 113/255,
+        -0.6, -0.35, 0, 54/255, 112/255, 113/255,
     ]
     indices = [0,1,2,3,4,5]
     return Shape(vertices, indices)
