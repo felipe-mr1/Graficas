@@ -235,6 +235,48 @@ def createPlanetFull():
 
     return gpuShape
 
+def createMass(aName):
+    r=0.0
+    b=0.0
+    g=0.0
+    if aName == "earth":
+        b=1.0
+    if aName == "sun":
+        r=0.98
+        g=0.77
+    else:
+        r=0.47
+        b=0.47
+        g=0.47
+
+    gpuShape = gs.GPUShape()
+
+    vertexData = np.array(
+        [0.5, 0.0, 0.0, r, g, b,
+        0.25, 0.25, 0.0, r, g, b,
+        0.0, 0.5, 0.0, r, g, b],
+        dtype=np.float32)
+
+    indices= np.array([0,1,2],dtype=np.uint32)
+
+    gpuShape.size = len(indices)
+
+    # VAO, VBO and EBO and  for the shape
+    gpuShape.vao = glGenVertexArrays(1)
+    gpuShape.vbo = glGenBuffers(1)
+    gpuShape.ebo = glGenBuffers(1)
+
+    # Vertex data must be attached to a Vertex Buffer Object (VBO)
+    glBindBuffer(GL_ARRAY_BUFFER, gpuShape.vbo)
+    glBufferData(GL_ARRAY_BUFFER, len(vertexData) * SIZE_IN_BYTES, vertexData, GL_STATIC_DRAW)
+
+    # Connections among vertices are stored in the Elements Buffer Object (EBO)
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gpuShape.ebo)
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(indices) * SIZE_IN_BYTES, indices, GL_STATIC_DRAW)
+
+    return gpuShape
+    
+
 if __name__ == "__main__":
 
     # Initialize glfw
@@ -296,10 +338,11 @@ if __name__ == "__main__":
     glClearColor(0.0, 0.0, 0.0, 1.0)
 
     # Creating shapes on GPU memory
-    gpuTriangle = createTriangle()
+    gpuEarth = createQuad()
     gpuQuad = createQuad()
-    gpuBall = createPlanet()
-    gpuPlanet = createPlanetFull()
+    gpuMoon = createQuad()
+    gpuPlanet = createQuad()
+    gpuSun = createQuad()
 
     while not glfw.window_should_close(window):
         # Using GLFW to check for input events
@@ -317,41 +360,43 @@ if __name__ == "__main__":
         # Using the time as the theta parameter
         theta = glfw.get_time()
 
-        # planet
+
+        # sun
         planetTransform = tr.matmul([
             tr.rotationZ(theta),
             tr.translate(0.0, 0.0,0),
-            tr.uniformScale(1.0)
+            tr.uniformScale(0.3)
         ])
 
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "transform"), 1, GL_TRUE, planetTransform)
 
-        drawCall(shaderProgram, gpuPlanet)
+        drawCall(shaderProgram, gpuSun)
 
-        # ball
+        # Moon
         balltransform = tr.matmul([
-            tr.rotationZ(2* theta),
-            tr.translate(0.5+0.4*np.cos(theta) - 0.4*np.sin(theta) , 0.5+ 0.4*np.cos(theta) + 0.4*np.sin(theta), 0),
-            tr.uniformScale(0.5)
+            tr.rotationZ( theta),
+            tr.translate(0.5+0.1*np.cos(theta) - 0.1*np.sin(theta) , 0.5+ 0.1*np.cos(theta) + 0.1*np.sin(theta), 0),
+            tr.uniformScale(0.05)
         ])
 
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "transform"), 1, GL_TRUE, balltransform)
 
-        drawCallLoop(shaderProgram, gpuBall)
+        drawCallLoop(shaderProgram, gpuMoon)
 
 
-        # Triangle
+        # Earth
         triangleTransform = tr.matmul([
-            tr.rotationZ(2* theta),
+            tr.rotationZ( theta),
             tr.translate(0.5, 0.5, 0),
-            tr.uniformScale(0.5)
+            tr.uniformScale(0.1),
+            tr.rotationZ(theta)
         ])
 
         # updating the transform attribute
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "transform"), 1, GL_TRUE, triangleTransform)
 
         # drawing function
-        drawCall(shaderProgram, gpuTriangle)
+        drawCall(shaderProgram, gpuEarth)
 
         """
         # Another instance of the triangle
@@ -388,7 +433,10 @@ if __name__ == "__main__":
         glfw.swap_buffers(window)
 
     # freeing GPU memory
-    gpuTriangle.clear()
+    gpuEarth.clear()
     gpuQuad.clear()
+    gpuMoon.clear()
+    gpuPlanet.clear()
+    gpuSun.clear()
     
     glfw.terminate()
