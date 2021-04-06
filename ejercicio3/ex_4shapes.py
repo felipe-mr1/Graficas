@@ -46,7 +46,7 @@ def on_key(window, key, scancode, action, mods):
         print('Unknown key')
 
 
-def drawCall(shaderProgram, shape):
+def drawCall(shaderProgram, shape, mode= GL_TRIANGLES):
 
     # Binding the proper buffers
     glBindVertexArray(shape.vao)
@@ -63,45 +63,7 @@ def drawCall(shaderProgram, shape):
     glEnableVertexAttribArray(color)
 
     # This line tells the active shader program to render the active element buffer with the given size
-    glDrawElements(GL_TRIANGLES, shape.size, GL_UNSIGNED_INT, None)
-
-def drawCallLoop(shaderProgram, shape):
-
-    # Binding the proper buffers
-    glBindVertexArray(shape.vao)
-    glBindBuffer(GL_ARRAY_BUFFER, shape.vbo)
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shape.ebo)
-
-    # Describing how the data is stored in the VBO
-    position = glGetAttribLocation(shaderProgram, "position")
-    glVertexAttribPointer(position, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(0))
-    glEnableVertexAttribArray(position)
-    
-    color = glGetAttribLocation(shaderProgram, "color")
-    glVertexAttribPointer(color, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(12))
-    glEnableVertexAttribArray(color)
-
-    # This line tells the active shader program to render the active element buffer with the given size
-    glDrawElements(GL_LINE_LOOP, shape.size, GL_UNSIGNED_INT, None)
-
-def drawCallFan(shaderProgram, shape):
-
-    # Binding the proper buffers
-    glBindVertexArray(shape.vao)
-    glBindBuffer(GL_ARRAY_BUFFER, shape.vbo)
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shape.ebo)
-
-    # Describing how the data is stored in the VBO
-    position = glGetAttribLocation(shaderProgram, "position")
-    glVertexAttribPointer(position, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(0))
-    glEnableVertexAttribArray(position)
-    
-    color = glGetAttribLocation(shaderProgram, "color")
-    glVertexAttribPointer(color, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(12))
-    glEnableVertexAttribArray(color)
-
-    # This line tells the active shader program to render the active element buffer with the given size
-    glDrawElements(GL_TRIANGLE_FAN, shape.size, GL_UNSIGNED_INT, None)
+    glDrawElements(mode, shape.size, GL_UNSIGNED_INT, None)
 
 
 def createTriangle():
@@ -138,7 +100,26 @@ def createTriangle():
     return gpuShape
 
 
-def createQuad():
+def createQuad(aName):
+
+    r=0.0
+    b=0.0
+    g=0.0
+    if aName == "earth":
+        r=0.0
+        g=0.0
+        b=1.0
+    if aName == "sun":
+        r=0.98
+        g=0.77
+    if aName == "moon":
+        r=0.47
+        b=0.47
+        g=0.47
+    if aName== "orbit":
+        r=1.0
+        g=1.0
+        b=1.0
 
     # Here the new shape will be stored
     gpuShape = gs.GPUShape()
@@ -147,10 +128,10 @@ def createQuad():
     
     vertexData = np.array([
     #   positions        colors
-        -0.5, -0.5, 0.0,  1.0, 0.0, 0.0,
-         0.5, -0.5, 0.0,  0.0, 1.0, 0.0,
-         0.5,  0.5, 0.0,  0.0, 0.0, 1.0,
-        -0.5,  0.5, 0.0,  1.0, 1.0, 1.0
+        -0.5, -0.5, 0.0,  r, g, b,
+         0.5, -0.5, 0.0,  r, g, b,
+         0.5,  0.5, 0.0,  r, g, b,
+        -0.5,  0.5, 0.0,  r, g, b
     # It is important to use 32 bits data
         ], dtype = np.float32)
 
@@ -177,47 +158,36 @@ def createQuad():
 
     return gpuShape
 
-def createPlanet():
+def createOrbit(N):
+
+    # Here the new shape will be stored
     gpuShape = gs.GPUShape()
 
-    vertexData = np.array([
-        0.5, 0.0, 0.0, 1.0, 0.0, 0.0,
-        0.0, 0.5, 0.0, 1.0, 0.0, 0.0,
-        -0.5, 0.0, 0.0, 1.0, 0.0, 0.0,
-        0.0, -0.5, 0.0, 1.0, 0.0, 0.0
-    ],dtype=np.float32)
+    # First vertex at the center, white color
+    vertices = []
+    indices = []
 
-    indices = np.array(
-        [0,1,2,
-        3], dtype=np.uint32)
+    dtheta = 2 * np.pi / N
 
-    gpuShape.size = len(indices)
+    for i in range(N):
+        theta = i * dtheta
 
-    gpuShape.vao = glGenVertexArrays(1)
-    gpuShape.vbo = glGenBuffers(1)
-    gpuShape.ebo = glGenBuffers(1)
+        vertices += [
+            # vertex coordinates
+            0.5 * np.cos(theta), 0.5 * np.sin(theta), 0,
 
-    glBindBuffer(GL_ARRAY_BUFFER, gpuShape.vbo)
-    glBufferData(GL_ARRAY_BUFFER, len(vertexData) * SIZE_IN_BYTES, vertexData, GL_STATIC_DRAW)
+            # color generates depending on the name
+                  1.0,       1.0, 1.0]
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gpuShape.ebo)
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(indices) * SIZE_IN_BYTES, indices, GL_STATIC_DRAW)
+        # A triangle is created using the center, this and the next vertex
+        indices += [ i, i+1]
 
-    return gpuShape
+    # The final triangle connects back to the second vertex
+    indices += [ N, 0]
 
-def createPlanetFull():
-    gpuShape = gs.GPUShape()
-
-    vertexData= np.array([
-        0.0,0.2,0.0,1.0,0.0,0.0,
-        -0.25,0.0, 0.0,1.0,0.0,0.0,
-        0.25,0.0,0.0,1.0,0.0,0.0
-    ],dtype=np.float32)
-
-    indices = np.array([
-        0,1,2
-    ], dtype= np.uint32)
-
+    vertices = np.array(vertices, dtype =np.float32)
+    indices = np.array(indices, dtype= np.uint32)
+        
     gpuShape.size = len(indices)
 
     # VAO, VBO and EBO and  for the shape
@@ -225,40 +195,59 @@ def createPlanetFull():
     gpuShape.vbo = glGenBuffers(1)
     gpuShape.ebo = glGenBuffers(1)
 
-    # Vertex data must be attached to a Vertex Buffer Object (VBO)
     glBindBuffer(GL_ARRAY_BUFFER, gpuShape.vbo)
-    glBufferData(GL_ARRAY_BUFFER, len(vertexData) * SIZE_IN_BYTES, vertexData, GL_STATIC_DRAW)
+    glBufferData(GL_ARRAY_BUFFER, len(vertices) * SIZE_IN_BYTES, vertices, GL_STATIC_DRAW)
 
-    # Connections among vertices are stored in the Elements Buffer Object (EBO)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gpuShape.ebo)
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(indices) * SIZE_IN_BYTES, indices, GL_STATIC_DRAW)
 
     return gpuShape
 
-def createMass(aName):
+def createCircle(N, aName):
+
     r=0.0
     b=0.0
     g=0.0
     if aName == "earth":
+        r=0.0
+        g=0.0
         b=1.0
     if aName == "sun":
         r=0.98
         g=0.77
-    else:
+    if aName == "moon":
         r=0.47
         b=0.47
         g=0.47
 
+    # Here the new shape will be stored
     gpuShape = gs.GPUShape()
 
-    vertexData = np.array(
-        [0.5, 0.0, 0.0, r, g, b,
-        0.25, 0.25, 0.0, r, g, b,
-        0.0, 0.5, 0.0, r, g, b],
-        dtype=np.float32)
+    # First vertex at the center, white color
+    vertices = [0, 0, 0, r, g, b]
+    indices = []
 
-    indices= np.array([0,1,2],dtype=np.uint32)
+    dtheta = 2 * np.pi / N
 
+    for i in range(N):
+        theta = i * dtheta
+
+        vertices += [
+            # vertex coordinates
+            0.5 * np.cos(theta), 0.5 * np.sin(theta), 0,
+
+            # color generates depending on the name
+                  r,       g, b]
+
+        # A triangle is created using the center, this and the next vertex
+        indices += [0, i, i+1]
+
+    # The final triangle connects back to the second vertex
+    indices += [0, N, 1]
+
+    vertices = np.array(vertices, dtype =np.float32)
+    indices = np.array(indices, dtype= np.uint32)
+        
     gpuShape.size = len(indices)
 
     # VAO, VBO and EBO and  for the shape
@@ -266,11 +255,9 @@ def createMass(aName):
     gpuShape.vbo = glGenBuffers(1)
     gpuShape.ebo = glGenBuffers(1)
 
-    # Vertex data must be attached to a Vertex Buffer Object (VBO)
     glBindBuffer(GL_ARRAY_BUFFER, gpuShape.vbo)
-    glBufferData(GL_ARRAY_BUFFER, len(vertexData) * SIZE_IN_BYTES, vertexData, GL_STATIC_DRAW)
+    glBufferData(GL_ARRAY_BUFFER, len(vertices) * SIZE_IN_BYTES, vertices, GL_STATIC_DRAW)
 
-    # Connections among vertices are stored in the Elements Buffer Object (EBO)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gpuShape.ebo)
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(indices) * SIZE_IN_BYTES, indices, GL_STATIC_DRAW)
 
@@ -338,11 +325,10 @@ if __name__ == "__main__":
     glClearColor(0.0, 0.0, 0.0, 1.0)
 
     # Creating shapes on GPU memory
-    gpuEarth = createQuad()
-    gpuQuad = createQuad()
-    gpuMoon = createQuad()
-    gpuPlanet = createQuad()
-    gpuSun = createQuad()
+    gpuEarth = createCircle(20, "earth")
+    gpuMoon = createCircle(20, "moon")
+    gpuSun = createCircle(20,"sun")
+    gpuOrbit = createOrbit(40)
 
     while not glfw.window_should_close(window):
         # Using GLFW to check for input events
@@ -360,11 +346,21 @@ if __name__ == "__main__":
         # Using the time as the theta parameter
         theta = glfw.get_time()
 
+        
+        # Earth Orbit
+        planetOrbitTransform = tr.matmul([
+            tr.translate(0.0, 0.0, 0.0),
+            tr.uniformScale(1.4)
+        ])
 
-        # sun
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "transform"), 1, GL_TRUE, planetOrbitTransform)
+
+        drawCall(shaderProgram, gpuOrbit, GL_POINTS)
+        
+
+        # Sun
         planetTransform = tr.matmul([
             tr.rotationZ(theta),
-            tr.translate(0.0, 0.0,0),
             tr.uniformScale(0.3)
         ])
 
@@ -373,19 +369,33 @@ if __name__ == "__main__":
         drawCall(shaderProgram, gpuSun)
 
         # Moon
-        balltransform = tr.matmul([
+        moonTransform = tr.matmul([
             tr.rotationZ( theta),
             tr.translate(0.5+0.1*np.cos(theta) - 0.1*np.sin(theta) , 0.5+ 0.1*np.cos(theta) + 0.1*np.sin(theta), 0),
             tr.uniformScale(0.05)
         ])
 
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "transform"), 1, GL_TRUE, balltransform)
+        
 
-        drawCallLoop(shaderProgram, gpuMoon)
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "transform"), 1, GL_TRUE, moonTransform)
 
+        drawCall(shaderProgram, gpuMoon)
+
+
+        # Moon Orbit
+        moonOrbitTransform= tr.matmul([
+            tr.rotationZ( theta),
+            tr.translate(0.5, 0.5, 0),
+            tr.uniformScale(0.3),
+            
+        ])
+
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "transform"), 1, GL_TRUE, moonOrbitTransform)
+
+        drawCall(shaderProgram, gpuOrbit, GL_POINTS)
 
         # Earth
-        triangleTransform = tr.matmul([
+        earthTransform = tr.matmul([
             tr.rotationZ( theta),
             tr.translate(0.5, 0.5, 0),
             tr.uniformScale(0.1),
@@ -393,7 +403,7 @@ if __name__ == "__main__":
         ])
 
         # updating the transform attribute
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "transform"), 1, GL_TRUE, triangleTransform)
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "transform"), 1, GL_TRUE, earthTransform)
 
         # drawing function
         drawCall(shaderProgram, gpuEarth)
@@ -434,9 +444,9 @@ if __name__ == "__main__":
 
     # freeing GPU memory
     gpuEarth.clear()
-    gpuQuad.clear()
+    #gpuQuad.clear()
     gpuMoon.clear()
-    gpuPlanet.clear()
+    #gpuPlanet.clear()
     gpuSun.clear()
     
     glfw.terminate()
