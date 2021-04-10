@@ -176,14 +176,17 @@ def createOrbit(N):
             # vertex coordinates
             0.5 * np.cos(theta), 0.5 * np.sin(theta), 0,
 
-            # color generates depending on the name
+            # white color
                   1.0,       1.0, 1.0]
 
         # A triangle is created using the center, this and the next vertex
-        indices += [ i, i+1]
+        if i < N-1:
+            indices += [ i, i+1] # correcto
+        if i == N-1:
+            indices += [ i, 0]
 
     # The final triangle connects back to the second vertex
-    indices += [ N, 0]
+    #indices += [ N, 0]
 
     vertices = np.array(vertices, dtype =np.float32)
     indices = np.array(indices, dtype= np.uint32)
@@ -368,6 +371,28 @@ if __name__ == "__main__":
 
         drawCall(shaderProgram, gpuSun)
 
+        # Sun contorno
+        sunEdge = tr.matmul([
+            tr.uniformScale(0.3)
+        ])
+
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "transform"), 1, GL_TRUE, sunEdge)
+
+        drawCall(shaderProgram, gpuOrbit, GL_LINES)
+
+        # Moon Orbit
+        moonOrbitTransform= tr.matmul([
+            tr.rotationZ( theta),
+            tr.translate(0.5, 0.5, 0),
+            tr.uniformScale(0.29),
+            tr.rotationZ(-theta)
+            
+        ])
+
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "transform"), 1, GL_TRUE, moonOrbitTransform)
+
+        drawCall(shaderProgram, gpuOrbit, GL_POINTS)
+
         # Moon
         moonTransform = tr.matmul([
             tr.rotationZ( theta),
@@ -375,24 +400,23 @@ if __name__ == "__main__":
             tr.uniformScale(0.05)
         ])
 
-        
-
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "transform"), 1, GL_TRUE, moonTransform)
 
         drawCall(shaderProgram, gpuMoon)
 
-
-        # Moon Orbit
-        moonOrbitTransform= tr.matmul([
+        # Moon edge
+        moonEdgeTransformation = tr.matmul([
             tr.rotationZ( theta),
-            tr.translate(0.5, 0.5, 0),
-            tr.uniformScale(0.3),
-            
+            tr.translate(0.5+0.1*np.cos(theta) - 0.1*np.sin(theta) , 0.5+ 0.1*np.cos(theta) + 0.1*np.sin(theta), 0),
+            tr.uniformScale(0.05)
         ])
 
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "transform"), 1, GL_TRUE, moonOrbitTransform)
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "transform"), 1, GL_TRUE, moonEdgeTransformation)
 
-        drawCall(shaderProgram, gpuOrbit, GL_POINTS)
+        drawCall(shaderProgram, gpuOrbit, GL_LINES)
+
+
+        
 
         # Earth
         earthTransform = tr.matmul([
@@ -402,11 +426,25 @@ if __name__ == "__main__":
             tr.rotationZ(theta)
         ])
 
+
         # updating the transform attribute
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "transform"), 1, GL_TRUE, earthTransform)
 
         # drawing function
         drawCall(shaderProgram, gpuEarth)
+
+        # Earth Edge
+        earthEdgeTransformation = tr.matmul([
+            tr.rotationZ(theta),
+            tr.translate(0.5, 0.5, 0),
+            tr.uniformScale(0.1)
+        ])
+
+        # updating the transform attribute
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "transform"), 1, GL_TRUE, earthEdgeTransformation)
+
+        # drawing function
+        drawCall(shaderProgram, gpuOrbit, GL_LINES)
 
         """
         # Another instance of the triangle
