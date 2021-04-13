@@ -66,104 +66,11 @@ def drawCall(shaderProgram, shape, mode= GL_TRIANGLES):
     glDrawElements(mode, shape.size, GL_UNSIGNED_INT, None)
 
 
-def createTriangle():
-
-    # Here the new shape will be stored
-    gpuShape = gs.GPUShape()
-
-    # Defining the location and colors of each vertex  of the shape
-    vertexData = np.array(
-    #     positions       colors
-        [-0.7, -0.7, 0.0, 1.0, 0.0, 0.0,
-          0.7, -0.7, 0.0, 0.0, 1.0, 0.0,
-          0.0,  0.7, 0.0, 0.0, 0.0, 1.0],
-          dtype = np.float32) # It is important to use 32 bits data
-
-    # Defining connections among vertices
-    # We have a triangle every 3 indices specified
-    indices = np.array(
-        [0, 1, 2], dtype= np.uint32)
-        
-    gpuShape.size = len(indices)
-
-    # VAO, VBO and EBO and  for the shape
-    gpuShape.vao = glGenVertexArrays(1)
-    gpuShape.vbo = glGenBuffers(1)
-    gpuShape.ebo = glGenBuffers(1)
-
-    glBindBuffer(GL_ARRAY_BUFFER, gpuShape.vbo)
-    glBufferData(GL_ARRAY_BUFFER, len(vertexData) * SIZE_IN_BYTES, vertexData, GL_STATIC_DRAW)
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gpuShape.ebo)
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(indices) * SIZE_IN_BYTES, indices, GL_STATIC_DRAW)
-
-    return gpuShape
-
-
-def createQuad(aName):
-
-    r=0.0
-    b=0.0
-    g=0.0
-    if aName == "earth":
-        r=0.0
-        g=0.0
-        b=1.0
-    if aName == "sun":
-        r=0.98
-        g=0.77
-    if aName == "moon":
-        r=0.47
-        b=0.47
-        g=0.47
-    if aName== "orbit":
-        r=1.0
-        g=1.0
-        b=1.0
-
-    # Here the new shape will be stored
-    gpuShape = gs.GPUShape()
-
-    # Defining locations and colors for each vertex of the shape
-    
-    vertexData = np.array([
-    #   positions        colors
-        -0.5, -0.5, 0.0,  r, g, b,
-         0.5, -0.5, 0.0,  r, g, b,
-         0.5,  0.5, 0.0,  r, g, b,
-        -0.5,  0.5, 0.0,  r, g, b
-    # It is important to use 32 bits data
-        ], dtype = np.float32)
-
-    # Defining connections among vertices
-    # We have a triangle every 3 indices specified
-    indices = np.array(
-        [0, 1, 2,
-         2, 3, 0], dtype= np.uint32)
-
-    gpuShape.size = len(indices)
-
-    # VAO, VBO and EBO and  for the shape
-    gpuShape.vao = glGenVertexArrays(1)
-    gpuShape.vbo = glGenBuffers(1)
-    gpuShape.ebo = glGenBuffers(1)
-
-    # Vertex data must be attached to a Vertex Buffer Object (VBO)
-    glBindBuffer(GL_ARRAY_BUFFER, gpuShape.vbo)
-    glBufferData(GL_ARRAY_BUFFER, len(vertexData) * SIZE_IN_BYTES, vertexData, GL_STATIC_DRAW)
-
-    # Connections among vertices are stored in the Elements Buffer Object (EBO)
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gpuShape.ebo)
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(indices) * SIZE_IN_BYTES, indices, GL_STATIC_DRAW)
-
-    return gpuShape
-
 def createOrbit(N):
 
     # Here the new shape will be stored
     gpuShape = gs.GPUShape()
 
-    # First vertex at the center, white color
     vertices = []
     indices = []
 
@@ -179,14 +86,53 @@ def createOrbit(N):
             # white color
                   1.0,       1.0, 1.0]
 
-        # A triangle is created using the center, this and the next vertex
-        if i < N-1:
+        # every 2 vertices we will add an indice
+        if i % 2 == 0:
             indices += [ i, i+1] # correcto
+
+    vertices = np.array(vertices, dtype =np.float32)
+    indices = np.array(indices, dtype= np.uint32)
+        
+    gpuShape.size = len(indices)
+
+    # VAO, VBO and EBO and  for the shape
+    gpuShape.vao = glGenVertexArrays(1)
+    gpuShape.vbo = glGenBuffers(1)
+    gpuShape.ebo = glGenBuffers(1)
+
+    glBindBuffer(GL_ARRAY_BUFFER, gpuShape.vbo)
+    glBufferData(GL_ARRAY_BUFFER, len(vertices) * SIZE_IN_BYTES, vertices, GL_STATIC_DRAW)
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gpuShape.ebo)
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(indices) * SIZE_IN_BYTES, indices, GL_STATIC_DRAW)
+
+    return gpuShape
+
+def createEdge(N):
+
+    # Here the new shape will be stored
+    gpuShape = gs.GPUShape()
+
+    vertices = []
+    indices = []
+
+    dtheta = 2 * np.pi / N
+
+    for i in range(N):
+        theta = i * dtheta
+
+        vertices += [
+            # vertex coordinates
+            0.5 * np.cos(theta), 0.5 * np.sin(theta), 0,
+
+            # white color
+                  1.0,       1.0, 1.0]
+
+        # Connecting every pair of vertices
+        if i < N-1:
+            indices += [ i, i+1]
         if i == N-1:
             indices += [ i, 0]
-
-    # The final triangle connects back to the second vertex
-    #indices += [ N, 0]
 
     vertices = np.array(vertices, dtype =np.float32)
     indices = np.array(indices, dtype= np.uint32)
@@ -207,7 +153,6 @@ def createOrbit(N):
     return gpuShape
 
 def createCircle(N, aName):
-
     r=0.0
     b=0.0
     g=0.0
@@ -227,7 +172,8 @@ def createCircle(N, aName):
     gpuShape = gs.GPUShape()
 
     # First vertex at the center, white color
-    vertices = [0, 0, 0, r, g, b]
+    #vertices = [0, 0, 0, r, g, b]
+    vertices = []
     indices = []
 
     dtheta = 2 * np.pi / N
@@ -243,10 +189,14 @@ def createCircle(N, aName):
                   r,       g, b]
 
         # A triangle is created using the center, this and the next vertex
-        indices += [0, i, i+1]
+        #indices += [0, i, i+1]!!!!!!!!
+        if i < N-1:
+            indices += [ i, i+1]
+        if i == N-1:
+            indices += [ i, 0]
 
     # The final triangle connects back to the second vertex
-    indices += [0, N, 1]
+    #indices += [0, N, 1]!!!!!!!!!!!!
 
     vertices = np.array(vertices, dtype =np.float32)
     indices = np.array(indices, dtype= np.uint32)
@@ -328,10 +278,11 @@ if __name__ == "__main__":
     glClearColor(0.0, 0.0, 0.0, 1.0)
 
     # Creating shapes on GPU memory
-    gpuEarth = createCircle(20, "earth")
-    gpuMoon = createCircle(20, "moon")
+    gpuEarth = createCircle(20,"earth")
+    gpuMoon = createCircle(20,"moon")
     gpuSun = createCircle(20,"sun")
-    gpuOrbit = createOrbit(40)
+    gpuOrbit = createOrbit(80)
+    gpuEdge = createEdge(40)
 
     while not glfw.window_should_close(window):
         # Using GLFW to check for input events
@@ -358,10 +309,10 @@ if __name__ == "__main__":
 
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "transform"), 1, GL_TRUE, planetOrbitTransform)
 
-        drawCall(shaderProgram, gpuOrbit, GL_POINTS)
+        drawCall(shaderProgram, gpuOrbit, GL_LINES)
         
 
-        # Sun
+        # Sun 
         planetTransform = tr.matmul([
             tr.rotationZ(theta),
             tr.uniformScale(0.3)
@@ -369,7 +320,7 @@ if __name__ == "__main__":
 
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "transform"), 1, GL_TRUE, planetTransform)
 
-        drawCall(shaderProgram, gpuSun)
+        drawCall(shaderProgram, gpuSun, GL_TRIANGLE_FAN)
 
         # Sun contorno
         sunEdge = tr.matmul([
@@ -378,7 +329,7 @@ if __name__ == "__main__":
 
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "transform"), 1, GL_TRUE, sunEdge)
 
-        drawCall(shaderProgram, gpuOrbit, GL_LINES)
+        drawCall(shaderProgram, gpuEdge, GL_LINES)
 
         # Moon Orbit
         moonOrbitTransform= tr.matmul([
@@ -391,7 +342,7 @@ if __name__ == "__main__":
 
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "transform"), 1, GL_TRUE, moonOrbitTransform)
 
-        drawCall(shaderProgram, gpuOrbit, GL_POINTS)
+        drawCall(shaderProgram, gpuOrbit, GL_LINES)
 
         # Moon
         moonTransform = tr.matmul([
@@ -402,7 +353,7 @@ if __name__ == "__main__":
 
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "transform"), 1, GL_TRUE, moonTransform)
 
-        drawCall(shaderProgram, gpuMoon)
+        drawCall(shaderProgram, gpuMoon, GL_TRIANGLE_FAN)
 
         # Moon edge
         moonEdgeTransformation = tr.matmul([
@@ -413,7 +364,7 @@ if __name__ == "__main__":
 
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "transform"), 1, GL_TRUE, moonEdgeTransformation)
 
-        drawCall(shaderProgram, gpuOrbit, GL_LINES)
+        drawCall(shaderProgram, gpuEdge, GL_LINES)
 
 
         
@@ -431,7 +382,7 @@ if __name__ == "__main__":
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "transform"), 1, GL_TRUE, earthTransform)
 
         # drawing function
-        drawCall(shaderProgram, gpuEarth)
+        drawCall(shaderProgram, gpuEarth, GL_TRIANGLE_FAN)
 
         # Earth Edge
         earthEdgeTransformation = tr.matmul([
@@ -444,7 +395,7 @@ if __name__ == "__main__":
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "transform"), 1, GL_TRUE, earthEdgeTransformation)
 
         # drawing function
-        drawCall(shaderProgram, gpuOrbit, GL_LINES)
+        drawCall(shaderProgram, gpuEdge, GL_LINES)
 
         """
         # Another instance of the triangle
@@ -482,9 +433,9 @@ if __name__ == "__main__":
 
     # freeing GPU memory
     gpuEarth.clear()
-    #gpuQuad.clear()
+    gpuOrbit.clear()
     gpuMoon.clear()
-    #gpuPlanet.clear()
+    gpuEdge.clear()
     gpuSun.clear()
     
     glfw.terminate()
