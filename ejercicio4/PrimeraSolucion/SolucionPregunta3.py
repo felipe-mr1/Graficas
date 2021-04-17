@@ -154,13 +154,13 @@ def on_key(window, key, scancode, action, mods):
         controller.x += 0.00
         controller.actual_sprite = (controller.actual_sprite + 1)%10
         controller.actual_rain = (controller.actual_rain + 1)%5
-        controller.direction = controller.direction
+        controller.direction = 1
     
     elif key == glfw.KEY_LEFT:
         controller.x -= 0.00
         controller.actual_sprite = (controller.actual_sprite - 1)%10
         controller.actual_rain = (controller.actual_rain + 1)%5
-        controller.direction = controller.direction
+        controller.direction = -1
 
 #####################################################################################################
 
@@ -257,6 +257,7 @@ if __name__ == "__main__":
 
         glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "transform"), 1, GL_TRUE, tr.matmul([
             tr.translate(controller.x, 0, 0),
+            tr.scale(controller.direction, 1.0, 0.0),
             tr.uniformScale(0.5)
         ]))
 
