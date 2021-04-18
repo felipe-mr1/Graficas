@@ -151,12 +151,12 @@ def on_key(window, key, scancode, action, mods):
 
     elif key == glfw.KEY_RIGHT:
         controller.actual_sprite = (controller.actual_sprite + 1)%10
-        controller.actual_rain = (controller.actual_rain + 1)%5
+        #controller.actual_rain = (controller.actual_rain + 1)%5
         controller.direction = 1
     
     elif key == glfw.KEY_LEFT:
         controller.actual_sprite = (controller.actual_sprite - 1)%10
-        controller.actual_rain = (controller.actual_rain + 1)%5
+        #controller.actual_rain = (controller.actual_rain + 1)%5
         controller.direction = -1
 
 #####################################################################################################
@@ -239,6 +239,8 @@ if __name__ == "__main__":
     while not glfw.window_should_close(window):
         # Using GLFW to check for input events
         glfw.poll_events()
+
+        controller.actual_rain = (controller.actual_rain + 1)%10  # continuous rain
 
         if (controller.fillPolygon):
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
