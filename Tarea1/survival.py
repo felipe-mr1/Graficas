@@ -37,16 +37,16 @@ class SimpleNewTextureTransformShaderProgram:
                 gl_Position = transform * vec4(position, 0, 1.0f);
 
                 if(position.x>0 && position.y>0){
-                    outTexCoords = vec2((texture_index + 1)*1/10, 0); 
+                    outTexCoords = vec2(1, 0); 
                 }
                 else if(position.x<0 && position.y>0){
-                    outTexCoords = vec2(texture_index*1/10, 0);
+                    outTexCoords = vec2(0, 0);
                 }
                 else if(position.x>0 && position.y<0){
-                    outTexCoords = vec2((texture_index + 1)*1/10, 1);
+                    outTexCoords = vec2(1, 1);
                 }
                 else{
-                    outTexCoords = vec2(texture_index*1/10, 1);
+                    outTexCoords = vec2(0, 1);
                 }
             }
             """
@@ -216,6 +216,8 @@ if __name__ == "__main__":
 
     shapeStore = createTextureQuad()
 
+    shapeHinata = createTextureQuad()
+
     #gpuKnight = GPUShape().initBuffers()
     #pipeline.setupVAO(gpuKnight)
 
@@ -231,13 +233,17 @@ if __name__ == "__main__":
     gpuStore = GPUShape().initBuffers()
     pipeline.setupVAO(gpuStore)
 
+    gpuHinata = GPUShape().initBuffers()
+    pipeline.setupVAO(gpuHinata)
+
     # Definimos donde se encuentra la textura
     thisFilePath = os.path.abspath(__file__)
     thisFolderPath = os.path.dirname(thisFilePath)
     texturesDirectory = os.path.join(thisFolderPath, "textures")
     zombiePath = os.path.join(texturesDirectory, "zombie.png")
-    studientPath = os.path.join(texturesDirectory, "estudiante.png")
+    studientPath = os.path.join(texturesDirectory, "estudiante5.png")
     storePath = os.path.join(texturesDirectory, "tienda.png")
+    hinataPath = os.path.join(texturesDirectory, "hinata2.png")
     #spritePath = os.path.join(spritesDirectory, "sprites.png")
     #rainPath = os.path.join(spritesDirectory, "pngegg.png")
 
@@ -250,13 +256,16 @@ if __name__ == "__main__":
 
     """
     gpuZombie.texture = es.textureSimpleSetup(
-        zombiePath, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST)
+        zombiePath, GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST)
     
-    ####gpuStudient.texture = es.textureSimpleSetup(
-        ####studientPath, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST)
+    gpuStudient.texture = es.textureSimpleSetup(
+        studientPath, GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST)
     
     gpuStore.texture = es.textureSimpleSetup(
-        storePath, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST)
+        storePath, GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST)
+
+    gpuHinata.texture = es.textureSimpleSetup(
+        hinataPath, GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST)
     
 
     #gpuKnight.fillBuffers(shapeKnight.vertices, shapeKnight.indices, GL_STATIC_DRAW)
@@ -267,7 +276,9 @@ if __name__ == "__main__":
 
     gpuStore.fillBuffers(shapeStore.vertices, shapeStore.indices, GL_STATIC_DRAW)
     
-    ####gpuStudient.fillBuffers(shapeStudient.vertices, shapeStudient.indices, GL_STATIC_DRAW)
+    gpuStudient.fillBuffers(shapeStudient.vertices, shapeStudient.indices, GL_STATIC_DRAW)
+
+    gpuHinata.fillBuffers(shapeHinata.vertices, shapeHinata.indices, GL_STATIC_DRAW)
 
 #######################################################################################################    
 
@@ -276,6 +287,8 @@ if __name__ == "__main__":
         glfw.poll_events()
 
         #controller.actual_rain = (controller.actual_rain + 1)%10  # continuous rain
+
+        time = glfw.get_time()
 
         if (controller.fillPolygon):
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
@@ -292,7 +305,8 @@ if __name__ == "__main__":
         
 
         glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "transform"), 1, GL_TRUE, tr.matmul([
-            tr.uniformScale(0.5)
+            tr.uniformScale(0.5),
+            tr.translate(0.0,-0.5,0.0)
         ]))
 
         glUniform1f(glGetUniformLocation(pipeline.shaderProgram, "texture_index"), controller.actual_rain)
@@ -300,12 +314,31 @@ if __name__ == "__main__":
         pipeline.drawCall(gpuStore)
 
         glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "transform"), 1, GL_TRUE, tr.matmul([
-            tr.uniformScale(0.5)
+            tr.uniformScale(0.5),
+            tr.translate(0.5,0,0)
         ]))
 
         glUniform1f(glGetUniformLocation(pipeline.shaderProgram, "texture_index"), controller.actual_sprite)
 
         pipeline.drawCall(gpuZombie)
+
+        glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "transform"), 1, GL_TRUE, tr.matmul([
+            tr.uniformScale(0.5),
+            tr.translate(-0.5,0,0)
+        ]))
+
+        glUniform1f(glGetUniformLocation(pipeline.shaderProgram, "texture_index"), controller.actual_sprite)
+        
+        pipeline.drawCall(gpuStudient)
+
+        glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "transform"), 1, GL_TRUE, tr.matmul([
+            tr.uniformScale(0.5),
+            tr.translate(0,0.5,0)
+        ]))
+
+        glUniform1f(glGetUniformLocation(pipeline.shaderProgram, "texture_index"), controller.actual_sprite)
+        
+        pipeline.drawCall(gpuHinata)
 
         """
 
