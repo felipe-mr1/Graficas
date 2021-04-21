@@ -210,11 +210,16 @@ if __name__ == "__main__":
 
     shapeRain = createTextureQuad()
 
+    shapeBricks = createTextureQuad()
+
     gpuKnight = GPUShape().initBuffers()
     pipeline.setupVAO(gpuKnight)
 
     gpuRain = GPUShape().initBuffers()
     pipeline.setupVAO(gpuRain)
+
+    gpuBricks = GPUShape().initBuffers()
+    pipeline.setupVAO(gpuBricks)
 
     # Definimos donde se encuentra la textura
     thisFilePath = os.path.abspath(__file__)
@@ -222,17 +227,23 @@ if __name__ == "__main__":
     spritesDirectory = os.path.join(thisFolderPath, "Sprites")
     spritePath = os.path.join(spritesDirectory, "sprites.png")
     rainPath = os.path.join(spritesDirectory, "pngegg.png")
+    bricksPath = os.path.join(spritesDirectory, "landscape.png")
 
     gpuKnight.texture = es.textureSimpleSetup(
         spritePath, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST)
 
     gpuRain.texture = es.textureSimpleSetup(
         rainPath, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST)
+
+    gpuBricks.texture = es.textureSimpleSetup(
+        bricksPath, GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST)
     
 
     gpuKnight.fillBuffers(shapeKnight.vertices, shapeKnight.indices, GL_STATIC_DRAW)
 
     gpuRain.fillBuffers(shapeRain.vertices, shapeRain.indices, GL_STATIC_DRAW)
+    
+    gpuBricks.fillBuffers(shapeBricks.vertices, shapeBricks.indices, GL_STATIC_DRAW)
 
 #######################################################################################################    
 
@@ -254,6 +265,16 @@ if __name__ == "__main__":
 
 ##############################################################################################################
 
+        glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "transform"), 1, GL_TRUE, tr.matmul([
+            tr.translate(0.0, 0, 0),
+            tr.uniformScale(1.5)
+        ]))
+
+        glUniform1f(glGetUniformLocation(pipeline.shaderProgram, "texture_index"), controller.actual_sprite)
+
+        pipeline.drawCall(gpuBricks)
+        
+        
         glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "transform"), 1, GL_TRUE, tr.matmul([
             tr.scale(controller.direction * 0.5, 0.5, 0.0)
         ]))
