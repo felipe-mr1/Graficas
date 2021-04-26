@@ -3,6 +3,7 @@
 import glfw
 import OpenGL.GL.shaders
 import numpy as np
+import random
 import grafica.basic_shapes as bs
 import grafica.easy_shaders as es
 import grafica.transformations as tr
@@ -106,12 +107,21 @@ if __name__ == "__main__":
     glEnable(GL_BLEND)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
+    
+
     # Grafo de escena del auto
-    car = createCar(pipeline) 
+    car = createCar(pipeline)
+    sun = createSun(pipeline)
     # Grafo de escena del background
     mainScene = createScene(pipeline)
     # Se añade el auto a la escena principal
-    mainScene.childs += [car]
+    #mainScene.childs += [car]
+
+    worlds = sg.SceneGraphNode("paisaje")
+    worlds.childs += [mainScene]
+
+    supahScene= sg.SceneGraphNode("entire_world")
+    supahScene.childs += [worlds,car,sun]
 
     # Se instancia el modelo del auto
     player = Player(0.3)
@@ -150,11 +160,16 @@ if __name__ == "__main__":
     glfw.swap_interval(0)
     t0 = glfw.get_time()
 
+    g0 = t0
+
+    j = 0
+
     # Application loop
     while not glfw.window_should_close(window):
         # Variables del tiempo
         t1 = glfw.get_time()
         delta = t1 -t0
+        gelta = t1 -g0
         t0 = t1
 
         # Measuring performance
@@ -181,9 +196,44 @@ if __name__ == "__main__":
         rotor = sg.findNode(mainScene, "rtRotor")
         rotor.transform = tr.rotationZ(t1)
 
+        """
+        # Siguiente escena
+        if(t1%35<0.5):
+            nextScene = createScene(pipeline) # no va
+            nextWorld = sg.findNode(worlds, "world")
+            nextWorld.transform = tr.translate(2.0, 0.0, -1.0)
+            j = j + 1
+            worlds.childs+=[nextScene]
+
+            
+        newRotor = sg.findNode(nextScene, "rtRotor")
+        newRotor.transform = tr.rotationZ(t1)
+        """
+        
+        # Escena principal
+        escena= sg.findNode(supahScene, "paisaje")
+        escena.transform = tr.translate(-t1*0.05, 0.0, 0.0)
+
+        
         # Se dibuja el grafo de escena principal
         glUseProgram(pipeline.shaderProgram)
-        sg.drawSceneGraphNode(mainScene, pipeline, "transform")
+        sg.drawSceneGraphNode(supahScene, pipeline, "transform")
+
+        
+        if(gelta > 3):
+            g0 = t1
+            newGarbageNode= sg.SceneGraphNode("garbage" + str(t1))
+            newGarbageNode.childs+=[garbage]
+            tex_scene.childs+=[newGarbageNode]
+            newCarga = Carga(1.1 + t1/10, -(0.5 + random.uniform(0, 0.3)),0.1)
+            newCarga.set_model(newGarbageNode)
+            newCarga.update()
+            cargas += [newCarga]
+        
+
+        garbages = sg.findNode(tex_scene, "textureScene")
+        garbages.transform = tr.translate(-t1*0.05, 0.0, 0.0)
+        
 
         # Se dibuja el grafo de escena con texturas
         glUseProgram(tex_pipeline.shaderProgram)
@@ -193,6 +243,7 @@ if __name__ == "__main__":
         glfw.swap_buffers(window)
 
     # freeing GPU memory
+    supahScene.clear()
     mainScene.clear()
     tex_scene.clear()
     
