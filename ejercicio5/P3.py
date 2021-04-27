@@ -113,12 +113,20 @@ if __name__ == "__main__":
     car = createCar(pipeline)
     sun = createSun(pipeline)
     # Grafo de escena del background
-    mainScene = createScene(pipeline)
-    # Se añade el auto a la escena principal
-    #mainScene.childs += [car]
+    mainScene1 = createScene(pipeline)
+    mainScene2 = createScene(pipeline)
+    mainScene3 = createScene(pipeline)
+
+    mundo1 = sg.SceneGraphNode("1")
+    mundo1.childs += [mainScene1]
+    mundo2 = sg.SceneGraphNode("2")
+    mundo2.childs += [mainScene2]
+    mundo3 = sg.SceneGraphNode("3")
+    mundo3.childs += [mainScene3]
+    
 
     worlds = sg.SceneGraphNode("paisaje")
-    worlds.childs += [mainScene]
+    worlds.childs += [mundo1,mundo2, mundo3]
 
     supahScene= sg.SceneGraphNode("entire_world")
     supahScene.childs += [worlds,car,sun]
@@ -164,6 +172,21 @@ if __name__ == "__main__":
 
     j = 0
 
+    m1=1
+    m2=1
+    m3=1
+
+    sg.findNode(supahScene, "sun").transform= tr.matmul([tr.translate(1.0,1.0,0), tr.scale(0.3,0.3,0)])
+
+    world2 = sg.findNode(worlds, "2")
+    world2.transform = tr.translate(0.0,0.0,0)
+
+    world1 = sg.findNode(worlds, "1")
+    world1.transform = tr.translate(-2.0, 0.0,0.0)
+
+    world3 = sg.findNode(worlds, "3")
+    world3.transform= tr.translate(2.0, 0.0,0.0)
+
     # Application loop
     while not glfw.window_should_close(window):
         # Variables del tiempo
@@ -192,26 +215,38 @@ if __name__ == "__main__":
         # Se llama al metodo del player para actualizar su posicion
         player.update(delta)
 
-        # Se crea el movimiento de giro del rotor
-        rotor = sg.findNode(mainScene, "rtRotor")
-        rotor.transform = tr.rotationZ(t1)
+        # Se crea el movimiento de giro de los rotores
+        rotor1 = sg.findNode(mundo1, "rtRotor")
+        rotor1.transform = tr.rotationZ(t1)
 
-        """
-        # Siguiente escena
-        if(t1%35<0.5):
-            nextScene = createScene(pipeline) # no va
-            nextWorld = sg.findNode(worlds, "world")
-            nextWorld.transform = tr.translate(2.0, 0.0, -1.0)
-            j = j + 1
-            worlds.childs+=[nextScene]
+        rotor2 = sg.findNode(mundo2, "rtRotor")
+        rotor2.transform = tr.rotationZ(t1)
 
+        rotor3 = sg.findNode(mundo3, "rtRotor")
+        rotor3.transform = tr.rotationZ(t1)
+
+        ###########################################################
+        if(t1%40<0.1):
+            if(j%3==1):
+                k=t1//40 +1
+                world1.transform = tr.translate(2*2,0.0,0.0)
+                m2+=2 # m2=3
+            elif(j%3==0):
+                k=t1//40 +1
+                world3.transform = tr.translate(2 * 1,0.0,0.0)
+                m1+=1 # m1=2
+            elif(j%3==2):
+                k=t1//40 +1
+                world2.transform = tr.translate(2 * 3,0.0,0.0)
+                m3+= 3 
+            j+=1
+                
             
-        newRotor = sg.findNode(nextScene, "rtRotor")
-        newRotor.transform = tr.rotationZ(t1)
-        """
-        
+
+        #######################################################
+
         # Escena principal
-        escena= sg.findNode(supahScene, "paisaje")
+        escena = sg.findNode(supahScene, "paisaje")
         escena.transform = tr.translate(-t1*0.05, 0.0, 0.0)
 
         
@@ -220,7 +255,7 @@ if __name__ == "__main__":
         sg.drawSceneGraphNode(supahScene, pipeline, "transform")
 
         
-        if(gelta > 3):
+        if(gelta > 5):
             g0 = t1
             newGarbageNode= sg.SceneGraphNode("garbage" + str(t1))
             newGarbageNode.childs+=[garbage]
@@ -229,10 +264,21 @@ if __name__ == "__main__":
             newCarga.set_model(newGarbageNode)
             newCarga.update()
             cargas += [newCarga]
-        
+
 
         garbages = sg.findNode(tex_scene, "textureScene")
-        garbages.transform = tr.translate(-t1*0.05, 0.0, 0.0)
+        garbages.transform = tr.translate(-t1*0.1, 0.0, 0.0)
+
+        ######
+        garbage1Node.transform = tr.translate(-t1*0.2, 0.0, 0.0)
+        carga1.update()
+        ######
+
+
+        for x in cargas:
+            x.update()
+
+        player.collision(cargas)
         
 
         # Se dibuja el grafo de escena con texturas
@@ -244,7 +290,7 @@ if __name__ == "__main__":
 
     # freeing GPU memory
     supahScene.clear()
-    mainScene.clear()
+    #mainScene.clear()
     tex_scene.clear()
     
     glfw.terminate()
