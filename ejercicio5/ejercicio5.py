@@ -274,7 +274,7 @@ if __name__ == "__main__":
 
 
         for x in cargas:
-            x.pos[0] -= 0.001
+            x.pos[0] -= 0.007
             x.update()
 
         player.collision(cargas)
