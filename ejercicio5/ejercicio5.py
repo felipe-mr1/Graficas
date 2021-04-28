@@ -254,7 +254,7 @@ if __name__ == "__main__":
         glUseProgram(pipeline.shaderProgram)
         sg.drawSceneGraphNode(supahScene, pipeline, "transform")
 
-        
+        # Se crean basuras cada 5 segundos
         if(gelta > 5):
             g0 = t1
             newGarbageNode= sg.SceneGraphNode("garbage" + str(t1))
@@ -265,17 +265,14 @@ if __name__ == "__main__":
             newCarga.update()
             cargas += [newCarga]
 
+        # Las basuras se desplazan
+        #garbages = sg.findNode(tex_scene, "textureScene")
+        #garbages.transform = tr.translate(-t1*0.1, 0.0, 0.0)
 
-        garbages = sg.findNode(tex_scene, "textureScene")
-        garbages.transform = tr.translate(-t1*0.1, 0.0, 0.0)
-
-        ######
-        garbage1Node.transform = tr.translate(-t1*0.2, 0.0, 0.0)
-        carga1.update()
-        ######
 
 
         for x in cargas:
+            x.pos[0] -= 0.001
             x.update()
 
         player.collision(cargas)
