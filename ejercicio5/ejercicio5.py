@@ -257,7 +257,7 @@ if __name__ == "__main__":
         sg.drawSceneGraphNode(supahScene, pipeline, "transform")
 
         # Se crean basuras cada 5 segundos
-        if(gelta > 5):
+        if(gelta > 2):
             g0 = t1
             newGarbageNode= sg.SceneGraphNode("garbage" + str(t1))
             newGarbageNode.childs+=[garbage]
