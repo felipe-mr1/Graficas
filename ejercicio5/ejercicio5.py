@@ -179,13 +179,13 @@ if __name__ == "__main__":
     sg.findNode(supahScene, "sun").transform= tr.matmul([tr.translate(1.0,1.0,0), tr.scale(0.3,0.3,0)])
 
     world2 = sg.findNode(worlds, "2")
-    world2.transform = tr.translate(0.0,0.0,0)
+    world2.transform = tr.translate(2.0,0.0,0)
 
     world1 = sg.findNode(worlds, "1")
-    world1.transform = tr.translate(-2.0, 0.0,0.0)
+    world1.transform = tr.translate(0.0, 0.0,0.0)
 
     world3 = sg.findNode(worlds, "3")
-    world3.transform= tr.translate(2.0, 0.0,0.0)
+    world3.transform= tr.translate(4.0, 0.0,0.0)
 
     # Application loop
     while not glfw.window_should_close(window):
@@ -226,6 +226,7 @@ if __name__ == "__main__":
         rotor3.transform = tr.rotationZ(t1)
 
         ###########################################################
+        """
         if(t1%40<0.1):
             if(j%3==1):
                 k=t1//40 +1
@@ -240,14 +241,15 @@ if __name__ == "__main__":
                 world2.transform = tr.translate(2 * 3,0.0,0.0)
                 m3+= 3 
             j+=1
-                
-            
-
+        """
         #######################################################
+        world1.transform=tr.translate((0.0)- ((t1%5)/2.5),0.0,0.0)
+        world2.transform=tr.translate((2.0)- ((t1%5)/2.5),0.0,0.0)
+        world3.transform=tr.translate((4.0)- ((t1%5)/2.5),0.0,0.0)
 
         # Escena principal
-        escena = sg.findNode(supahScene, "paisaje")
-        escena.transform = tr.translate(-t1*0.05, 0.0, 0.0)
+        #escena = sg.findNode(supahScene, "paisaje")
+        #escena.transform = tr.translate(-t1*0.05, 0.0, 0.0)
 
         
         # Se dibuja el grafo de escena principal
