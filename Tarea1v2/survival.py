@@ -4,6 +4,7 @@ import glfw
 import OpenGL.GL.shaders
 import numpy as np
 import random
+import sys
 import grafica.basic_shapes as bs
 import grafica.easy_shaders as es
 import grafica.transformations as tr
@@ -143,6 +144,7 @@ if __name__ == "__main__":
     # Shape con textura de la carga
     garbage = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "Tarea1v2/sprites/bag.png")
     #gpuTreeQuad = createTextureGPUShape(bs.createTextureQuad(1, 1), tex_pipeline, "Tarea1v2/sprites/tree.bmp")
+    forest = createTextureScene(tex_pipeline)
 
     # Se crean dos nodos de carga
     garbage1Node = sg.SceneGraphNode("garbage1")
@@ -155,7 +157,7 @@ if __name__ == "__main__":
 
     # Se crean el grafo de escena con textura y se agregan las cargas
     tex_scene = sg.SceneGraphNode("textureScene")
-    tex_scene.childs = [garbage1Node, garbage2Node, hinataNode]
+    tex_scene.childs = [garbage1Node, garbage2Node, hinataNode, forest]
 
     # Se crean los modelos de la carga, se indican su nodo y se actualiza la posicion fija
     carga1 = Carga(0.2, -0.55, 0.1)
@@ -232,6 +234,7 @@ if __name__ == "__main__":
         """
 
         ###########################################################
+        """
         if(t1%40<0.1):
             if(j%3==1):
                 k=t1//40 +1
@@ -247,7 +250,7 @@ if __name__ == "__main__":
                 m3+= 3 
             j+=1
                 
-            
+        """
 
         #######################################################
 

@@ -33,10 +33,10 @@ class Player():
             self.pos[0] -= self.vel[0] * delta
         # Si detecta la tecla [W] presionada y no se ha salido de la pista se mueve hacia arriba
         if self.controller.is_w_pressed and self.pos[1] < -0.45:
-            self.pos[1] += self.vel[1] * delta * 0.5
+            self.pos[1] += self.vel[1] * delta
         # Si detecta la tecla [S] presionada y no se ha salido de la pista se mueve hacia abajo
         if self.controller.is_s_pressed and self.pos[1] > -0.8:
-            self.pos[1] -= self.vel[1] * delta * 0.5
+            self.pos[1] -= self.vel[1] * delta
         #print(self.pos[0], self.pos[1])
 
         # Se le aplica la transformacion de traslado segun la posicion actual

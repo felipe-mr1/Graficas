@@ -198,6 +198,42 @@ def createSun(pipeline):
 
     return sunNode
 
+def createTextureScene(tex_pipeline):
+    gpuTree = createTextureGPUShape(bs.createTextureQuad(1, 1), tex_pipeline, "Tarea1v2/sprites/tree2.png")
+
+    # Nodo del primer arbol
+    tree1Node = sg.SceneGraphNode("tree1")
+    tree1Node.transform = tr.matmul([tr.translate(0.0, -0.8, 0), tr.scale(0.3, 0.3, 1)])
+    tree1Node.childs = [gpuTree]
+    # Nodo del segundo arbol
+    tree2Node = sg.SceneGraphNode("tree2")
+    tree2Node.transform = tr.matmul([tr.translate(0.0, -0.3, 0), tr.scale(0.3, 0.3, 1)])
+    tree2Node.childs = [gpuTree]
+    # Nodo del tercer arbol
+    tree3Node = sg.SceneGraphNode("tree3")
+    tree3Node.transform = tr.matmul([tr.translate(0.0, 0.3, 0), tr.scale(0.3, 0.3, 1)])
+    tree3Node.childs = [gpuTree]
+    # Nodo del cuarto arbol
+    tree4Node = sg.SceneGraphNode("tree4")
+    tree4Node.transform = tr.matmul([tr.translate(0.0, 0.8, 0), tr.scale(0.3, 0.3, 1)])
+    tree4Node.childs = [gpuTree]
+    # Nodo de los arboles de la izquirda
+    leftTreeNode = sg.SceneGraphNode("leftTrees")
+    leftTreeNode.transform = tr.translate(-0.75,0.0,1.0)
+    leftTreeNode.childs = [tree1Node, tree2Node, tree3Node, tree4Node]
+    # Nodo de los arboles de la derecha
+    rightTreeNode = sg.SceneGraphNode("rightTrees")
+    rightTreeNode.transform = tr.translate(0.75,0.0,1.0)
+    rightTreeNode.childs = [tree1Node, tree2Node, tree3Node, tree4Node]
+    # Nodo del bosque
+    forestNode = sg.SceneGraphNode("trees")
+    forestNode.childs = [leftTreeNode, rightTreeNode]
+    # Escena
+    sceneNode = sg.SceneGraphNode("forest")
+    sceneNode.childs = [forestNode]
+
+    return sceneNode
+
 def createScene(pipeline):
     # Funcion que crea la escena de la pregunta 2
 
