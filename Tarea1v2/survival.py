@@ -117,20 +117,16 @@ if __name__ == "__main__":
     # Grafo de escena del auto
     car = createCar(pipeline)
     # Grafo de escena del background
-    mainScene1 = createScene(pipeline)
     mainScene2 = createScene(pipeline)
-    mainScene3 = createScene(pipeline)
 
-    mundo1 = sg.SceneGraphNode("1")
-    mundo1.childs += [mainScene1]
+    
     mundo2 = sg.SceneGraphNode("2")
     mundo2.childs += [mainScene2]
-    mundo3 = sg.SceneGraphNode("3")
-    mundo3.childs += [mainScene3]
+    
     
 
     worlds = sg.SceneGraphNode("paisaje")
-    worlds.childs += [mundo1,mundo2, mundo3]
+    worlds.childs += [mundo2]
 
     supahScene= sg.SceneGraphNode("entire_world")
     supahScene.childs += [worlds]
@@ -142,8 +138,11 @@ if __name__ == "__main__":
     player.set_controller(controller)
 
     # Shape con textura de la carga
-    garbage = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "Tarea1v2/sprites/bag.png")
-    #gpuTreeQuad = createTextureGPUShape(bs.createTextureQuad(1, 1), tex_pipeline, "Tarea1v2/sprites/tree.bmp")
+    garbage = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "Tarea1v2/sprites/sidewalk.jpg")
+    gpuZombie = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "Tarea1v2/sprites/zombie.png")
+    gpuHuman = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "Tarea1v2/sprites/estudiante5.png")
+
+
     forest = createTextureScene(tex_pipeline)
 
     # Se crean dos nodos de carga
@@ -153,11 +152,14 @@ if __name__ == "__main__":
     garbage2Node = sg.SceneGraphNode("garbage2")
     garbage2Node.childs = [garbage]
 
-    
+    gpuStore = createTextureGPUShape(bs.createTextureQuad(1, 1), tex_pipeline, "Tarea1v2/sprites/tienda.png")
+    storeNode = sg.SceneGraphNode("store")
+    storeNode.transform = tr.matmul([tr.translate(-0.8, 0.7, 0),tr.rotationZ(1.57), tr.scale(0.5,0.35,1)])
+    storeNode.childs = [gpuStore]
 
     # Se crean el grafo de escena con textura y se agregan las cargas
     tex_scene = sg.SceneGraphNode("textureScene")
-    tex_scene.childs = [garbage1Node, garbage2Node, hinataNode, forest]
+    tex_scene.childs = [garbage1Node, garbage2Node, hinataNode, forest, storeNode]
 
     # Se crean los modelos de la carga, se indican su nodo y se actualiza la posicion fija
     carga1 = Carga(0.2, -0.55, 0.1)
@@ -178,20 +180,15 @@ if __name__ == "__main__":
 
     g0 = t0
 
-    j = 0
 
-    m1=1
-    m2=1
-    m3=1
 
-    world2 = sg.findNode(worlds, "2")
-    world2.transform = tr.translate(0.0,0.0,0)
+    # Inputs del usuario
+    var_z = int(sys.argv[1]) # Cantidad de zombies
+    var_h = int(sys.argv[2]) # Cantidad de humanos
+    var_t = int(sys.argv[3]) # Tiempo en el cual deben aparecer humanos o zombies
+    var_p = int(sys.argv[4]) # Probabilidad de que un humano zombifique cada T segundos
 
-    world1 = sg.findNode(worlds, "1")
-    world1.transform = tr.translate(-2.0, 0.0,0.0)
 
-    world3 = sg.findNode(worlds, "3")
-    world3.transform= tr.translate(2.0, 0.0,0.0)
 
     # Application loop
     while not glfw.window_should_close(window):
@@ -221,38 +218,6 @@ if __name__ == "__main__":
         # Se llama al metodo del player para actualizar su posicion
         player.update(delta)
 
-        """
-        # Se crea el movimiento de giro de los rotores
-        rotor1 = sg.findNode(mundo1, "rtRotor")
-        rotor1.transform = tr.rotationZ(t1)
-
-        rotor2 = sg.findNode(mundo2, "rtRotor")
-        rotor2.transform = tr.rotationZ(t1)
-
-        rotor3 = sg.findNode(mundo3, "rtRotor")
-        rotor3.transform = tr.rotationZ(t1)
-        """
-
-        ###########################################################
-        """
-        if(t1%40<0.1):
-            if(j%3==1):
-                k=t1//40 +1
-                world1.transform = tr.translate(2*2,0.0,0.0)
-                m2+=2 # m2=3
-            elif(j%3==0):
-                k=t1//40 +1
-                world3.transform = tr.translate(2 * 1,0.0,0.0)
-                m1+=1 # m1=2
-            elif(j%3==2):
-                k=t1//40 +1
-                world2.transform = tr.translate(2 * 3,0.0,0.0)
-                m3+= 3 
-            j+=1
-                
-        """
-
-        #######################################################
 
         # Escena principal
         escena = sg.findNode(supahScene, "paisaje")
@@ -264,15 +229,25 @@ if __name__ == "__main__":
         sg.drawSceneGraphNode(supahScene, pipeline, "transform")
 
         # Se crean basuras cada 5 segundos
-        if(gelta > 5):
+        if(gelta > var_t):
+            next_npc = random.randint(0, 1)
+            if(next_npc == 0 or var_h == 0):
+                newZombieNode= sg.SceneGraphNode("zombie" + str(t1))
+                newZombieNode.childs+=[gpuZombie]
+                tex_scene.childs+=[newZombieNode]
+                newZombie = Carga(random.uniform(-0.55,0.55),1.1, 0.3)
+                newZombie.set_model(newZombieNode)
+                newZombie.update()
+                cargas += [newZombie]
+            elif(next_npc == 1 or var_z == 0):
+                newHumanNode = sg.SceneGraphNode("human" + str(t1))
+                newHumanNode.childs+= [gpuHuman]
+                tex_scene.childs+=[newHumanNode]
+                newHuman = Carga(random.uniform(-0.55,0.55),1.1, 0.3)
+                newHuman.set_model(newHumanNode)
+                newHuman.update()
+                cargas+=[newHuman]
             g0 = t1
-            newGarbageNode= sg.SceneGraphNode("garbage" + str(t1))
-            newGarbageNode.childs+=[garbage]
-            tex_scene.childs+=[newGarbageNode]
-            newCarga = Carga(1.1 + t1/10, -(0.5 + random.uniform(0, 0.3)),0.1)
-            newCarga.set_model(newGarbageNode)
-            newCarga.update()
-            cargas += [newCarga]
 
         # Las basuras se desplazan
         garbages = sg.findNode(tex_scene, "textureScene")
@@ -281,10 +256,14 @@ if __name__ == "__main__":
 
 
         for x in cargas:
+            x.pos[1]-= 0.0007
             x.update()
 
         player.collision(cargas)
-        
+        """
+        bosque = sg.findNode(tex_scene, "leftTrees")
+        bosque.transform = tr.shearing(0.05 * np.cos(t1), 0,0,0,0,0)
+        """
 
         # Se dibuja el grafo de escena con texturas
         glUseProgram(tex_pipeline.shaderProgram)
@@ -295,7 +274,7 @@ if __name__ == "__main__":
 
     # freeing GPU memory
     supahScene.clear()
-    #mainScene.clear()
+    mainScene2.clear()
     tex_scene.clear()
     
     glfw.terminate()

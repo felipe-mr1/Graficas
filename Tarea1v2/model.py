@@ -26,16 +26,16 @@ class Player():
         # Se actualiza la posicion del auto
 
         # Si detecta la tecla [D] presionada se mueve hacia la derecha
-        if self.controller.is_d_pressed and self.pos[0] < 0.9:
+        if self.controller.is_d_pressed and self.pos[0] < 0.6:
             self.pos[0] += self.vel[0] * delta
         # Si detecta la tecla [A] presionada se mueve hacia la izquierda
-        if self.controller.is_a_pressed and self.pos[0] > -0.9:
+        if self.controller.is_a_pressed and self.pos[0] > -0.6:
             self.pos[0] -= self.vel[0] * delta
         # Si detecta la tecla [W] presionada y no se ha salido de la pista se mueve hacia arriba
-        if self.controller.is_w_pressed and self.pos[1] < -0.45:
+        if self.controller.is_w_pressed and self.pos[1] < 0.85:
             self.pos[1] += self.vel[1] * delta
         # Si detecta la tecla [S] presionada y no se ha salido de la pista se mueve hacia abajo
-        if self.controller.is_s_pressed and self.pos[1] > -0.8:
+        if self.controller.is_s_pressed and self.pos[1] > -0.85:
             self.pos[1] -= self.vel[1] * delta
         #print(self.pos[0], self.pos[1])
 
