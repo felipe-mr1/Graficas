@@ -26,6 +26,7 @@ class infectedPipeline:
             #version 130
 
             uniform mat4 transform;
+            
 
             in vec3 position;
             in vec2 texCoords;
@@ -42,6 +43,8 @@ class infectedPipeline:
         fragment_shader = """
             #version 130
 
+            uniform float infected;
+
             in vec2 outTexCoords;
 
             out vec4 outColor;
@@ -50,7 +53,13 @@ class infectedPipeline:
 
             void main()
             {
-                outColor = texture(samplerTex, outTexCoords);
+                if(infected == 1)
+                {
+                    outColor = texture(samplerTex, outTexCoords);
+                } else 
+                {
+                    outColor = texture(samplerTex, outTexCoords);
+                }
             }
             """
 
@@ -252,7 +261,7 @@ if __name__ == "__main__":
     var_z = int(sys.argv[1]) # Cantidad de zombies
     var_h = int(sys.argv[2]) # Cantidad de humanos
     var_t = int(sys.argv[3]) # Tiempo en el cual deben aparecer humanos o zombies
-    var_p = int(sys.argv[4]) # Probabilidad de que un humano zombifique cada T segundos
+    var_p = float(sys.argv[4]) # Probabilidad de que un humano zombifique cada T segundos
 
     notGameOver = True
 
@@ -298,21 +307,21 @@ if __name__ == "__main__":
             next_npc = random.randint(0, 1)
             prob = random.uniform(0, 1)
             # Se crea un zombie
-            if(next_npc == 0 or var_h == 0 and var_z > 0):
+            if((next_npc == 0 or var_h == 0) and var_z > 0):
                 newZombieNode= sg.SceneGraphNode("zombie" + str(t1))
                 newZombieNode.childs+=[gpuZombie]
                 tex_scene.childs+=[newZombieNode]
-                newZombie = Carga(random.uniform(-0.55,0.55),1.1, 0.3, 1)
+                newZombie = Carga(random.uniform(-0.55,0.55),1.1, 0.3, 1, "z" + str(t1))
                 newZombie.set_model(newZombieNode)
                 newZombie.update()
                 cargas += [newZombie]
                 var_z-=1
             # Se crea un humano
-            elif(next_npc == 1 or var_z == 0 and var_h > 0):
+            elif((next_npc == 1 or var_z == 0) and var_h > 0):
                 newHumanNode = sg.SceneGraphNode("human" + str(t1))
                 newHumanNode.childs+= [gpuHuman]
                 tex_scene.childs+=[newHumanNode]
-                newHuman = Carga(random.uniform(-0.55,0.55),1.1, 0.3, 0)
+                newHuman = Carga(random.uniform(-0.55,0.55),1.1, 0.3, 0, "h" + str(t1))
                 newHuman.set_model(newHumanNode)
                 newHuman.update()
                 cargas+=[newHuman]
@@ -321,12 +330,14 @@ if __name__ == "__main__":
             # y existe una probabilidad de P de perder
             if(player.infected == 1 and prob < var_p):
                 player.zombie = 1
-                player.model.childs = [gpuZombie]
+                player.childs = [gpuZombie]
+                player.set_model(zombieNode)
             # Cada T segundos se verifica si un humano pasa a ser zombie
             for carga in cargas:
-                if(carga.zombie == 0 and carga.infected == 1 and prob < var_p):
+                if(carga.zombie == 0 and carga.infected > 0 and prob < var_p):
                     carga.zombie = 1
-                    carga.child = [gpuZombie]
+                    carga.model.childs = [gpuZombie]
+                    #carga.set_model(zombieNode)
             g0 = t1
 
         # Las basuras se desplazan
@@ -334,10 +345,16 @@ if __name__ == "__main__":
         garbages.transform = tr.translate(0.0, 0.0, 0.0)
 
 
-        for x in cargas:
-            x.pos[1]-= 0.0007
-            x.pos[0]+= (5-random.randint(1,10))/10000
-            x.update()
+        for character in cargas:
+            #x.pos[1]-= 0.0007
+            #x.pos[0]+= (5-random.randint(1,10))/10000
+            character.t += 0.0001
+            character.update()
+            character.collision(cargas)
+            if character.zombie == 1:
+                character.childs = [gpuZombie]
+                character.model.childs = [gpuZombie]
+                #x.set_model(zombieNode)
 
         if player.zombie==1 and notGameOver:
             hinataNode.childs = [gpuZombie]
@@ -346,6 +363,7 @@ if __name__ == "__main__":
             notGameOver = False
 
         player.collision(cargas)
+
         """
         bosque = sg.findNode(tex_scene, "leftTrees")
         bosque.transform = tr.shearing(0.05 * np.cos(t1), 0.05 * np.cos(t1),0,0,0,0)
@@ -357,6 +375,7 @@ if __name__ == "__main__":
 
         """
         glUseProgram(currentPipeline.shaderProgram)
+        glUniform1f(glGetUniformLocation(lightingPipeline.shaderProgram, "infected"), player.infected)
         sg.drawSceneGraphNode(npc_scene, currentPipeline, "transform")
         """
 

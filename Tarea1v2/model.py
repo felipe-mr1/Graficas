@@ -2,6 +2,7 @@
 
 import glfw
 import numpy as np
+import random as rd
 import grafica.transformations as tr
 
 class Player():
@@ -54,28 +55,46 @@ class Player():
                 if(carga.zombie==1):
                     self.zombie=1
                     #self.model = self.zmodel
-                if carga.infected == 1:
+                if carga.infected > 0:
                     self.infected = 1
                 print("CHOQUE")
                 return
         
 class Carga():
     # Clase para contener las caracteristicas de un objeto que representa una carga 
-    def __init__(self, posx, posy, size, typeOfNpc):
+    def __init__(self, posx, posy, size, typeOfNpc, aName):
         self.pos = [posx, posy]
-        self.radio = 0.05
+        self.radio = 0.12
         self.size = size
         self.model = None
-        self.infected = 0
+        self.infected = (typeOfNpc + rd.randint(0, 1))/2
         self.zombie = typeOfNpc
+        self.point1 = [posx, posy]
+        self.point2 = [-0.55, rd.randint(10, 90)/100]
+        self.point3 = [0.55, rd.randint(10, 90)/100]
+        self.point4 = [rd.uniform(-0.55, 0.55), -1.1]
+        self.t = 0.0
+        self.name = aName
     
     def set_model(self, new_model):
         self.model = new_model
 
     def update(self):
         # Se posiciona el nodo referenciado
+        self.pos[0] = ((1-(self.t))**3)*self.point1[0] + (self.t)*((1-(self.t))**2)*self.point2[0] + ((self.t)**2)*(1-(self.t))*self.point3[0] + ((self.t)**3)*self.point4[0]
+        self.pos[1] = ((1-(self.t))**3)*self.point1[1] + (self.t)*((1-(self.t))**2)*self.point2[1] + ((self.t)**2)*(1-(self.t))*self.point3[1] + ((self.t)**3)*self.point4[1]
         self.model.transform = tr.matmul([tr.translate(self.pos[0], self.pos[1], 0), tr.scale(self.size, self.size, 1)])
-
+        #self.model.transform = tr.matmul([tr.translate(self.pos[0], self.pos[1], 0), tr.scale(self.size, self.size, 1)])
+    def collision(self, cargas):
+        for carga in cargas:
+            if carga.name != self.name:
+                if (self.radio+carga.radio)**2 > ((self.pos[0]- carga.pos[0])**2 + (self.pos[1]-carga.pos[1])**2 ):
+                    #print("ASDASDASD")
+                    if carga.infected > 0:
+                        self.infected = 1
+                    if carga.zombie == 1:
+                        self.zombie = 1
+                        #print("EXXXXIIIIIITO")
 class Shop():
     def __init__(self):
         self.radio = 0.1
