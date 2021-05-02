@@ -203,9 +203,34 @@ def createTextureScene(tex_pipeline):
     gpuSidewalk = createTextureGPUShape(bs.createTextureQuad(1.0,3.0), tex_pipeline, "Tarea1v2/sprites/sidewalk.jpg", GL_REPEAT)
     gpuTreeRepeat = createTextureGPUShape(bs.createTextureQuad(1, 4), tex_pipeline, "Tarea1v2/sprites/tree2.png", GL_REPEAT)
 
-    sidewalkNode = sg.SceneGraphNode("sidewalk")
-    sidewalkNode.transform = tr.matmul([tr.translate(0.55, -0.64, 0),tr.scale(0.1, 0.7, 1)])
-    sidewalkNode.childs = [gpuSidewalk]
+    # Nodo vereda 1
+    sidewalk1Node = sg.SceneGraphNode("sidewalk")
+    sidewalk1Node.transform = tr.matmul([tr.translate(0, -0.64, 0),tr.scale(0.1, 0.7, 1)])
+    sidewalk1Node.childs = [gpuSidewalk]
+
+    # Nodo vereda 2
+    sidewalk2Node = sg.SceneGraphNode("vereda2")
+    sidewalk2Node.transform = tr.matmul([tr.translate(0, 0.07, 0),tr.scale(0.1, 0.7, 1)])
+    sidewalk2Node.childs = [gpuSidewalk]
+
+    # Nodo vereda 3
+    sidewalk3Node = sg.SceneGraphNode("vereda3")
+    sidewalk3Node.transform = tr.matmul([tr.translate(0, 0.72, 0),tr.scale(0.1, 0.58, 1)])
+    sidewalk3Node.childs = [gpuSidewalk]
+
+    # Nodo vereda izq
+    sideWalkLeftNode = sg.SceneGraphNode("veredaIzq")
+    sideWalkLeftNode.transform = tr.translate(-0.55, 0.0, 0.0)
+    sideWalkLeftNode.childs = [sidewalk1Node, sidewalk2Node, sidewalk3Node]
+
+    # vereda der
+    sideWalkRightNode = sg.SceneGraphNode("veredaDer")
+    sideWalkRightNode.transform = tr.translate(0.55, 0, 0)
+    sideWalkRightNode.childs = [sidewalk1Node, sidewalk2Node, sidewalk3Node]
+
+    # Nodo vereda
+    sidewalkNode = sg.SceneGraphNode("vereda")
+    sidewalkNode.childs = [sideWalkLeftNode, sideWalkRightNode]
 
     treeRepeatNode = sg.SceneGraphNode("sidewalk")
     treeRepeatNode.transform = tr.matmul([tr.translate(0, 0, 0),tr.scale(0.3, 0.3, 1)])

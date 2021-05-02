@@ -18,6 +18,78 @@ from model import *
 # 1 byte = 8 bits
 SIZE_IN_BYTES = 4
 
+class infectedPipeline:
+
+    def __init__(self):
+
+        vertex_shader = """
+            #version 130
+
+            uniform mat4 transform;
+
+            in vec3 position;
+            in vec2 texCoords;
+
+            out vec2 outTexCoords;
+
+            void main()
+            {
+                gl_Position = transform * vec4(position, 1.0f);
+                outTexCoords = texCoords;
+            }
+            """
+
+        fragment_shader = """
+            #version 130
+
+            in vec2 outTexCoords;
+
+            out vec4 outColor;
+
+            uniform sampler2D samplerTex;
+
+            void main()
+            {
+                outColor = texture(samplerTex, outTexCoords);
+            }
+            """
+
+        # Compiling our shader program
+        self.shaderProgram = OpenGL.GL.shaders.compileProgram(
+            OpenGL.GL.shaders.compileShader(vertex_shader, GL_VERTEX_SHADER),
+            OpenGL.GL.shaders.compileShader(fragment_shader, GL_FRAGMENT_SHADER))
+
+
+    def setupVAO(self, gpuShape):
+
+        glBindVertexArray(gpuShape.vao)
+
+        glBindBuffer(GL_ARRAY_BUFFER, gpuShape.vbo)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gpuShape.ebo)
+
+        # 3d vertices + 2d texture coordinates => 3*4 + 2*4 = 20 bytes
+        position = glGetAttribLocation(self.shaderProgram, "position")
+        glVertexAttribPointer(position, 3, GL_FLOAT, GL_FALSE, 20, ctypes.c_void_p(0))
+        glEnableVertexAttribArray(position)
+        
+        texCoords = glGetAttribLocation(self.shaderProgram, "texCoords")
+        glVertexAttribPointer(texCoords, 2, GL_FLOAT, GL_FALSE, 20, ctypes.c_void_p(3 * SIZE_IN_BYTES))
+        glEnableVertexAttribArray(texCoords)
+
+        # Unbinding current vao
+        glBindVertexArray(0)
+
+
+    def drawCall(self, gpuShape, mode=GL_TRIANGLES):
+        assert isinstance(gpuShape, GPUShape)
+
+        glBindVertexArray(gpuShape.vao)
+        glBindTexture(GL_TEXTURE_2D, gpuShape.texture)
+        glDrawElements(mode, gpuShape.size, GL_UNSIGNED_INT, None)
+
+        # Unbind the current VAO
+        glBindVertexArray(0)
+
 
 # Clase controlador con variables para manejar el estado de ciertos botones
 class Controller:
@@ -27,6 +99,7 @@ class Controller:
         self.is_s_pressed = False
         self.is_a_pressed = False
         self.is_d_pressed = False
+        self.glasses = False
 
 
 # we will use the global controller as communication with the callback function
@@ -65,9 +138,10 @@ def on_key(window, key, scancode, action, mods):
         elif action == glfw.RELEASE:
             controller.is_d_pressed = False
 
-    # Caso de detecar la barra espaciadora, se cambia el metodo de dibujo
+    # Caso de detecar la barra espaciadora, se utilizan los lentes
     if key == glfw.KEY_SPACE and action ==glfw.PRESS:
-        controller.fillPolygon = not controller.fillPolygon
+        controller.glasses = True
+        #controller.fillPolygon = not controller.fillPolygon
 
     # Caso en que se cierra la ventana
     elif key == glfw.KEY_ESCAPE and action ==glfw.PRESS:
@@ -84,7 +158,7 @@ if __name__ == "__main__":
     # Creating a glfw window
     width = 800
     height = 800
-    title = "P3 - Drive simulator"
+    title = "Survival Game"
     window = glfw.create_window(width, height, title, None, None)
 
     if not window:
@@ -100,6 +174,8 @@ if __name__ == "__main__":
     pipeline = es.SimpleTransformShaderProgram()
     # Pipeline para dibujar shapes con texturas
     tex_pipeline = es.SimpleTextureTransformShaderProgram()
+    # Pipeline de los lentes
+    green_pipeline = infectedPipeline()
 
     # Setting up the clear screen color
     glClearColor(0.15, 0.15, 0.15, 1.0)
@@ -108,14 +184,13 @@ if __name__ == "__main__":
     glEnable(GL_BLEND)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
-    
-    # Grafo de escena para Hinata
+    # Shape de hinata
     gpuHinata = createTextureGPUShape(bs.createTextureQuad(1, 1), tex_pipeline, "Tarea1v2/sprites/hinata2.png")
+
+    # Grafo de escena para Hinata
     hinataNode = sg.SceneGraphNode("Hinata")
     hinataNode.childs = [gpuHinata]
     
-    # Grafo de escena del auto
-    car = createCar(pipeline)
     # Grafo de escena del background
     mainScene2 = createScene(pipeline)
 
@@ -130,27 +205,28 @@ if __name__ == "__main__":
 
     supahScene= sg.SceneGraphNode("entire_world")
     supahScene.childs += [worlds]
+    
 
-    # Se instancia el modelo del auto
-    player = Player(0.2)
-    # Se indican las referencias del nodo y el controller al modelo
-    player.set_model(hinataNode)
-    player.set_controller(controller)
-
-    # Shape con textura de la carga
+    # Shape con texturas
     garbage = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "Tarea1v2/sprites/sidewalk.jpg")
     gpuZombie = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "Tarea1v2/sprites/zombie.png")
     gpuHuman = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "Tarea1v2/sprites/estudiante5.png")
+    gpuGameOver = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "Tarea1v2/sprites/game_over.png")
+
+    zombieNode = sg.SceneGraphNode("Zombie")
+    zombieNode.childs = [gpuZombie]
+
+    gameoverNode = sg.SceneGraphNode("game over")
+    gameoverNode.childs = [gpuGameOver]
+
+    # Se instancia el modelo del hinata
+    player = Player(0.2)
+    player.set_model(hinataNode)
+    player.set_controller(controller)
 
 
     forest = createTextureScene(tex_pipeline)
 
-    # Se crean dos nodos de carga
-    garbage1Node = sg.SceneGraphNode("garbage1")
-    garbage1Node.childs = [garbage]
-
-    garbage2Node = sg.SceneGraphNode("garbage2")
-    garbage2Node.childs = [garbage]
 
     gpuStore = createTextureGPUShape(bs.createTextureQuad(1, 1), tex_pipeline, "Tarea1v2/sprites/tienda.png")
     storeNode = sg.SceneGraphNode("store")
@@ -159,19 +235,11 @@ if __name__ == "__main__":
 
     # Se crean el grafo de escena con textura y se agregan las cargas
     tex_scene = sg.SceneGraphNode("textureScene")
-    tex_scene.childs = [garbage1Node, garbage2Node, hinataNode, forest, storeNode]
+    tex_scene.childs = [forest, storeNode, hinataNode]
 
-    # Se crean los modelos de la carga, se indican su nodo y se actualiza la posicion fija
-    carga1 = Carga(0.2, -0.55, 0.1)
-    carga1.set_model(garbage1Node)
-    carga1.update()
 
-    carga2 = Carga(0.7, -0.75, 0.1)
-    carga2.set_model(garbage2Node)
-    carga2.update()
-
-    # Lista con todas las cargas
-    cargas = [carga1, carga2]
+    # Lista con todas las cargas de NPC's
+    cargas = []
 
     perfMonitor = pm.PerformanceMonitor(glfw.get_time(), 0.5)
     # glfw will swap buffers as soon as possible
@@ -180,15 +248,13 @@ if __name__ == "__main__":
 
     g0 = t0
 
-
-
     # Inputs del usuario
     var_z = int(sys.argv[1]) # Cantidad de zombies
     var_h = int(sys.argv[2]) # Cantidad de humanos
     var_t = int(sys.argv[3]) # Tiempo en el cual deben aparecer humanos o zombies
     var_p = int(sys.argv[4]) # Probabilidad de que un humano zombifique cada T segundos
 
-
+    notGameOver = True
 
     # Application loop
     while not glfw.window_should_close(window):
@@ -210,6 +276,11 @@ if __name__ == "__main__":
         else:
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 
+        if controller.glasses:
+            currentPipeline = green_pipeline
+        else:
+            currentPipeline = tex_pipeline
+
         # Clearing the screen
         glClear(GL_COLOR_BUFFER_BIT)
 
@@ -217,13 +288,7 @@ if __name__ == "__main__":
         player.collision(cargas)
         # Se llama al metodo del player para actualizar su posicion
         player.update(delta)
-
-
-        # Escena principal
-        escena = sg.findNode(supahScene, "paisaje")
-        escena.transform = tr.translate(0.0, 0.0, 0.0)
-
-        
+   
         # Se dibuja el grafo de escena principal
         glUseProgram(pipeline.shaderProgram)
         sg.drawSceneGraphNode(supahScene, pipeline, "transform")
@@ -231,22 +296,37 @@ if __name__ == "__main__":
         # Se crean basuras cada 5 segundos
         if(gelta > var_t):
             next_npc = random.randint(0, 1)
-            if(next_npc == 0 or var_h == 0):
+            prob = random.uniform(0, 1)
+            # Se crea un zombie
+            if(next_npc == 0 or var_h == 0 and var_z > 0):
                 newZombieNode= sg.SceneGraphNode("zombie" + str(t1))
                 newZombieNode.childs+=[gpuZombie]
                 tex_scene.childs+=[newZombieNode]
-                newZombie = Carga(random.uniform(-0.55,0.55),1.1, 0.3)
+                newZombie = Carga(random.uniform(-0.55,0.55),1.1, 0.3, 1)
                 newZombie.set_model(newZombieNode)
                 newZombie.update()
                 cargas += [newZombie]
-            elif(next_npc == 1 or var_z == 0):
+                var_z-=1
+            # Se crea un humano
+            elif(next_npc == 1 or var_z == 0 and var_h > 0):
                 newHumanNode = sg.SceneGraphNode("human" + str(t1))
                 newHumanNode.childs+= [gpuHuman]
                 tex_scene.childs+=[newHumanNode]
-                newHuman = Carga(random.uniform(-0.55,0.55),1.1, 0.3)
+                newHuman = Carga(random.uniform(-0.55,0.55),1.1, 0.3, 0)
                 newHuman.set_model(newHumanNode)
                 newHuman.update()
                 cargas+=[newHuman]
+                var_h-=1
+            # Cada T segundos se verifica si hinata esta contagiada
+            # y existe una probabilidad de P de perder
+            if(player.infected == 1 and prob < var_p):
+                player.zombie = 1
+                player.model.childs = [gpuZombie]
+            # Cada T segundos se verifica si un humano pasa a ser zombie
+            for carga in cargas:
+                if(carga.zombie == 0 and carga.infected == 1 and prob < var_p):
+                    carga.zombie = 1
+                    carga.child = [gpuZombie]
             g0 = t1
 
         # Las basuras se desplazan
@@ -254,20 +334,31 @@ if __name__ == "__main__":
         garbages.transform = tr.translate(0.0, 0.0, 0.0)
 
 
-
         for x in cargas:
             x.pos[1]-= 0.0007
+            x.pos[0]+= (5-random.randint(1,10))/10000
             x.update()
+
+        if player.zombie==1 and notGameOver:
+            hinataNode.childs = [gpuZombie]
+            player.set_model(zombieNode)
+            tex_scene.childs+=[gameoverNode]
+            notGameOver = False
 
         player.collision(cargas)
         """
         bosque = sg.findNode(tex_scene, "leftTrees")
-        bosque.transform = tr.shearing(0.05 * np.cos(t1), 0,0,0,0,0)
+        bosque.transform = tr.shearing(0.05 * np.cos(t1), 0.05 * np.cos(t1),0,0,0,0)
         """
 
         # Se dibuja el grafo de escena con texturas
         glUseProgram(tex_pipeline.shaderProgram)
         sg.drawSceneGraphNode(tex_scene, tex_pipeline, "transform")
+
+        """
+        glUseProgram(currentPipeline.shaderProgram)
+        sg.drawSceneGraphNode(npc_scene, currentPipeline, "transform")
+        """
 
         # Once the drawing is rendered, buffers are swap so an uncomplete drawing is never seen.
         glfw.swap_buffers(window)
