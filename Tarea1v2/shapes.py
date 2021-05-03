@@ -229,37 +229,44 @@ def createTextureScene(tex_pipeline):
     treeRepeatNode.childs = [gpuTreeRepeat]
 
     # Nodo del primer arbol
-    tree1Node = sg.SceneGraphNode("tree1")
-    tree1Node.transform = tr.matmul([tr.translate(0.0, -0.8, 0), tr.scale(0.3, 0.3, 1)])
-    tree1Node.childs = [gpuTree]
+    treeNode = sg.SceneGraphNode("tree")
+    treeNode.transform = tr.scale(0.3, 0.3, 1)
+    treeNode.childs = [gpuTree]
     # Nodo del shearing
-    shearing1Node = sg.SceneGraphNode("shearing1")
-    shearing1Node.childs= [tree1Node]
+    shearingTreeNode = sg.SceneGraphNode("shearing")
+    shearingTreeNode.childs= [treeNode]
+    # Nodo del primer arbol
+    tree1Node = sg.SceneGraphNode("tree2")
+    tree1Node.transform = tr.translate(0.0, -0.8, 0)
+    tree1Node.childs = [shearingTreeNode]
     # Nodo del segundo arbol
     tree2Node = sg.SceneGraphNode("tree2")
-    tree2Node.transform = tr.matmul([tr.translate(0.0, -0.3, 0), tr.scale(0.3, 0.3, 1)])
-    tree2Node.childs = [gpuTree]
+    tree2Node.transform = tr.translate(0.0, -0.3, 0)
+    tree2Node.childs = [shearingTreeNode]
     # Nodo del tercer arbol
     tree3Node = sg.SceneGraphNode("tree3")
-    tree3Node.transform = tr.matmul([tr.translate(0.0, 0.3, 0), tr.scale(0.3, 0.3, 1)])
-    tree3Node.childs = [gpuTree]
+    tree3Node.transform = tr.translate(0.0, 0.3, 0)
+    tree3Node.childs = [shearingTreeNode]
     # Nodo del cuarto arbol
     tree4Node = sg.SceneGraphNode("tree4")
-    tree4Node.transform = tr.matmul([tr.translate(0.0, 0.8, 0), tr.scale(0.3, 0.3, 1)])
-    tree4Node.childs = [gpuTree]
+    tree4Node.transform = tr.translate(0.0, 0.8, 0)
+    tree4Node.childs = [shearingTreeNode]
+    # Nodo del conjunto de arboles
+    setOfTreesNode = sg.SceneGraphNode("set of trees")
+    setOfTreesNode.childs = [tree1Node, tree2Node, tree3Node, tree4Node]
     # Nodo de los arboles de la izquirda
     leftTreeNode = sg.SceneGraphNode("leftTrees")
     leftTreeNode.transform = tr.translate(-0.75,0.0,1.0)
-    leftTreeNode.childs = [shearing1Node, tree2Node, tree3Node, tree4Node]
+    leftTreeNode.childs = [setOfTreesNode]
     # Nodo de los arboles de la derecha
     rightTreeNode = sg.SceneGraphNode("rightTrees")
     rightTreeNode.transform = tr.translate(0.75,0.0,1.0)
-    rightTreeNode.childs = [tree1Node, tree2Node, tree3Node, tree4Node]
+    rightTreeNode.childs = [setOfTreesNode]
     # Nodo del bosque
     forestNode = sg.SceneGraphNode("trees")
     forestNode.childs = [leftTreeNode, rightTreeNode]
     # Escena
-    sceneNode = sg.SceneGraphNode("forest")
+    sceneNode = sg.SceneGraphNode("world")
     sceneNode.childs = [forestNode, sidewalkNode]
 
     return sceneNode

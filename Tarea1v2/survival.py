@@ -302,7 +302,7 @@ if __name__ == "__main__":
         glUseProgram(pipeline.shaderProgram)
         sg.drawSceneGraphNode(supahScene, pipeline, "transform")
 
-        shearing = sg.findNode(tex_scene, "shearing1")
+        shearing = sg.findNode(tex_scene, "shearing")
         shearing.transform = tr.shearing(0, 0.1 * np.cos(t1), 0, 0, 0, 0)
 
         # Se crean basuras cada 5 segundos
