@@ -189,14 +189,6 @@ def createCar(pipeline):
 
     return carNode
 
-def createSun(pipeline):
-    gpuYellowCircle = createGPUShape(createColorCircle(20, 1, 1, 0), pipeline) # Shape del circulo amarillo
-    # Nodo del sol, circulo amarillo escalado y posicionado
-    sunNode = sg.SceneGraphNode("sun")
-    sunNode.transform = tr.matmul([tr.translate(0.7, 0.6, -0.5), tr.scale(0.3, 0.3, 1)])
-    sunNode.childs = [gpuYellowCircle]
-
-    return sunNode
 
 def createTextureScene(tex_pipeline):
     gpuTree = createTextureGPUShape(bs.createTextureQuad(1, 1), tex_pipeline, "Tarea1v2/sprites/tree2.png")
@@ -240,6 +232,9 @@ def createTextureScene(tex_pipeline):
     tree1Node = sg.SceneGraphNode("tree1")
     tree1Node.transform = tr.matmul([tr.translate(0.0, -0.8, 0), tr.scale(0.3, 0.3, 1)])
     tree1Node.childs = [gpuTree]
+    # Nodo del shearing
+    shearing1Node = sg.SceneGraphNode("shearing1")
+    shearing1Node.childs= [tree1Node]
     # Nodo del segundo arbol
     tree2Node = sg.SceneGraphNode("tree2")
     tree2Node.transform = tr.matmul([tr.translate(0.0, -0.3, 0), tr.scale(0.3, 0.3, 1)])
@@ -255,7 +250,7 @@ def createTextureScene(tex_pipeline):
     # Nodo de los arboles de la izquirda
     leftTreeNode = sg.SceneGraphNode("leftTrees")
     leftTreeNode.transform = tr.translate(-0.75,0.0,1.0)
-    leftTreeNode.childs = [tree1Node, tree2Node, tree3Node, tree4Node]
+    leftTreeNode.childs = [shearing1Node, tree2Node, tree3Node, tree4Node]
     # Nodo de los arboles de la derecha
     rightTreeNode = sg.SceneGraphNode("rightTrees")
     rightTreeNode.transform = tr.translate(0.75,0.0,1.0)

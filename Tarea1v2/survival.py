@@ -302,6 +302,9 @@ if __name__ == "__main__":
         glUseProgram(pipeline.shaderProgram)
         sg.drawSceneGraphNode(supahScene, pipeline, "transform")
 
+        shearing = sg.findNode(tex_scene, "shearing1")
+        shearing.transform = tr.shearing(0, 0.1 * np.cos(t1), 0, 0, 0, 0)
+
         # Se crean basuras cada 5 segundos
         if(gelta > var_t):
             next_npc = random.randint(0, 1)
@@ -361,6 +364,8 @@ if __name__ == "__main__":
             player.set_model(zombieNode)
             tex_scene.childs+=[gameoverNode]
             notGameOver = False
+
+        gameoverNode.transform = tr.scale(1 + 0.5*np.cos(t1), 1 + 0.2*np.sin(t1), 1)
 
         player.collision(cargas)
 
