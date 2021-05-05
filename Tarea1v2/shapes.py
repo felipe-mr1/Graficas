@@ -9,191 +9,85 @@ import grafica.transformations as tr
 import grafica.ex_curves as cv
 import grafica.scene_graph as sg
 
-def createGPUShape(shape, pipeline):
+def createGPUShape(shape, pipeline, mode = GL_STATIC_DRAW):
     # Funcion Conveniente para facilitar la inicializacion de un GPUShape
     gpuShape = es.GPUShape().initBuffers()
     pipeline.setupVAO(gpuShape)
-    gpuShape.fillBuffers(shape.vertices, shape.indices, GL_STATIC_DRAW)
+    gpuShape.fillBuffers(shape.vertices, shape.indices, mode) # mode = GL_STATIC_DRAW
     return gpuShape
 
-def createTextureGPUShape(shape, pipeline, path, mode = GL_CLAMP_TO_EDGE):
+def createTextureGPUShape(shape, pipeline, path, drawMode, mipmap, mode = GL_CLAMP_TO_EDGE): #mipmap
     # Funcion Conveniente para facilitar la inicializacion de un GPUShape con texturas
     gpuShape = es.GPUShape().initBuffers()
     pipeline.setupVAO(gpuShape)
-    gpuShape.fillBuffers(shape.vertices, shape.indices, GL_STATIC_DRAW)
-    gpuShape.texture = es.textureSimpleSetup(
-        path, mode, mode, GL_NEAREST, GL_NEAREST)
+    gpuShape.fillBuffers(shape.vertices, shape.indices, drawMode)
+    if mipmap:
+        gpuShape.texture = es.textureSimpleSetup(
+            path, mode, mode, GL_LINEAR_MIPMAP_LINEAR, GL_NEAREST)
+        glGenerateMipmap(GL_TEXTURE_2D)
+    else:
+        gpuShape.texture = es.textureSimpleSetup(
+            path, mode, mode, GL_NEAREST, GL_NEAREST)
     return gpuShape
 
-def createColorTriangle(r, g, b):
-    # Funcion para crear un triangulo con un color personalizado
 
-    # Defining the location and colors of each vertex  of the shape
+def createCrossShape():
     vertices = [
-    #   positions        colors
-        -0.5, -0.5, 0.0,  r, g, b,
-         0.5, -0.5, 0.0,  r, g, b,
-         0.0,  0.5, 0.0,  r, g, b]
+        -0.2, 0.6, 0.0, 0.0, 1.0, 0.0,
+        -0.2, 0.2, 0.0, 0.0, 1.0, 0.0,
+        -0.6, 0.2, 0.0, 0.0, 1.0, 0.0,
+        -0.6, -0.2, 0.0, 0.0, 1.0, 0.0,
+        -0.2, -0.2, 0.0, 0.0, 1.0, 0.0,
+        -0.2, -0.6, 0.0, 0.0, 1.0, 0.0,
+        0.2, -0.6, 0.0, 0.0, 1.0, 0.0,
+        0.2, -0.2, 0.0, 0.0, 1.0, 0.0,
+        0.6, -0.2, 0.0, 0.0, 1.0, 0.0,
+        0.6, 0.2, 0.0, 0.0, 1.0, 0.0,
+        0.2, 0.2, 0.0, 0.0, 1.0, 0.0,
+        0.2, 0.6, 0.0, 0.0, 1.0, 0.0
+    ]
 
-    # Defining connections among vertices
-    # We have a triangle every 3 indices specified
-    indices = [0, 1, 2]
+    indices = [
+        0,1,
+        1,2,
+        2,3,
+        3,4,
+        4,5,
+        5,6,
+        6,7,
+        7,8,
+        8,9,
+        9,10,
+        11,0
+    ]
+    return bs.Shape(vertices,indices)
 
-    return bs.Shape(vertices, indices)
+def createPowerUp():
+    vertices = [
+        0.0, 0.5, 0.0, 0.0, 0.0, 1.0,
+        -0.3, -0.2, 0.0, 0.0, 0.0, 1.0,
+        0.2, -0.2, 0.0, 0.0, 0.0, 1.0,
+        -0.1, -0.5, 0.0, 0.0, 0.0, 1.0,
+        0.4, 0.2, 0.0, 0.0, 0.0, 1.0, 
+        -0.1, 0.2, 0.0, 0.0, 0.0, 1.0
+    ]
 
-def createColorCircle(N, r, g, b):
-    # Funcion para crear un circulo con un color personalizado
-    # Poligono de N lados 
-
-    # First vertex at the center, white color
-    vertices = [0, 0, 0, r, g, b]
-    indices = []
-
-    dtheta = 2 * math.pi / N
-
-    for i in range(N):
-        theta = i * dtheta
-
-        vertices += [
-            # vertex coordinates
-            0.5 * math.cos(theta), 0.5 * math.sin(theta), 0,
-
-            # color generates varying between 0 and 1
-                  r, g, b]
-
-        # A triangle is created using the center, this and the next vertex
-        indices += [0, i, i+1]
-
-    # The final triangle connects back to the second vertex
-    indices += [0, N, 1]
-
-    return bs.Shape(vertices, indices)
-
-def evalMixCurve(N):
-    # Funcion para generar N puntos entre 0 y 1 de una curva personalizada
-    # Hermite + Bezier para modelar la superficie de un auto
-
-    # Puntos de Control
-    P0 = np.array([[0.07, 0.14, 0]]).T
-    P1 = np.array([[0.27, -0.04, 0]]).T
-    P2 = np.array([[0.42, 0.06, 0]]).T
-    P3 = np.array([[0.5, -0.06, 0]]).T
-    P4 = np.array([[-0.5, -0.06, 0]]).T
-    T0 = np.array([[-0.13, 0.35, 0]]).T
-    alpha = 1
-    T1 = 3 * alpha * (P1 - P0)
-    # Matrices de Hermite y Beziers
-    H_M = cv.hermiteMatrix(P4, P0, T0, T1)
-    B_M = cv.bezierMatrix(P0, P1, P2, P3)
-
-    # Arreglo de numeros entre 0 y 1
-    ts = np.linspace(0.0, 1.0, N//2)
-    offset = N//2 
-    
-    # The computed value in R3 for each sample will be stored here
-    curve = np.ndarray(shape=(len(ts) * 2, 3), dtype=float)
-    
-    # Se llenan los puntos de la curva
-    for i in range(len(ts)):
-        T = cv.generateT(ts[i])
-        curve[i, 0:3] = np.matmul(H_M, T).T
-        curve[i + offset, 0:3] = np.matmul(B_M, T).T
-        
-    return curve
-
-def createColorChasis(r, g, b):
-    # Crea un shape del chasis de un auto a partir de una curva personalizada
-    vertices = []
-    indices = []
-    curve = evalMixCurve(64) # Se obtienen los puntos de la curva
-    delta = 1 / len(curve) # distancia del step /paso
-    x_0 = -0.5 # Posicion x inicial de la recta inferior
-    y_0 = -0.2 # Posicion y inicial de la recta inferior
-    counter = 0 # Contador de vertices, para indicar los indices
-
-    # Se generan los vertices
-    for i in range(len(curve)-1):
-        c_0 = curve[i] # punto i de la curva
-        r_0 = [x_0 + i*delta, y_0] # punto i de la recta
-        c_1 = curve[i + 1] # punto i + 1 de la curva
-        r_1 = [x_0 + (i+1)*delta, y_0] # punto i + 1 de la recta
-        vertices += [c_0[0], c_0[1], 0, r + 0.3, g + 0.3, b + 0.3]
-        vertices += [r_0[0], r_0[1], 0, r, g, b]
-        vertices += [c_1[0], c_1[1], 0, r + 0.3, g + 0.3, b + 0.3]
-        vertices += [r_1[0], r_1[1], 0, r, g, b]
-        indices += [counter + 0, counter +1, counter + 2]
-        indices += [counter + 2, counter + 3, counter + 1]
-        counter += 4
+    indices = [
+        0,1,
+        1,2,
+        2,3,
+        3,4,
+        4,5,
+        5,0
+    ]
 
     return bs.Shape(vertices, indices)
-
-
-def createCar(pipeline):
-    # Se crea la escena del auto de la pregunta 1
-
-    # Se crean las shapes en GPU
-    gpuChasis = createGPUShape(createColorChasis(0.7, 0, 0), pipeline) # Shape del chasis 
-    gpuGrayCircle =  createGPUShape(createColorCircle(20, 0.4, 0.4, 0.4), pipeline) # Shape del circulo gris
-    gpuBlackCircle =  createGPUShape(createColorCircle(20, 0, 0, 0), pipeline) # Shape del circulo negro
-    gpuBlueQuad = createGPUShape(bs.createColorQuad(0.2, 0.2, 1), pipeline) # Shape de quad azul
-
-    # Nodo del chasis rojo
-    redChasisNode = sg.SceneGraphNode("redChasis")
-    redChasisNode.childs = [gpuChasis]
-
-    # Nodo del circulo gris
-    grayCircleNode = sg.SceneGraphNode("grayCircleNode")
-    grayCircleNode.childs = [gpuGrayCircle]
-    
-    # Nodo del circulo negro
-    blackCircleNode = sg.SceneGraphNode("blackCircle")
-    blackCircleNode.childs = [gpuBlackCircle]
-
-    # Nodo del quad celeste
-    blueQuadNode = sg.SceneGraphNode("blueQuad")
-    blueQuadNode.childs = [gpuBlueQuad]
-
-    # Nodo del circulo gris escalado
-    scaledGrayCircleNode = sg.SceneGraphNode("slGrayCircle")
-    scaledGrayCircleNode.transform = tr.scale(0.6, 0.6, 0.6)
-    scaledGrayCircleNode.childs = [grayCircleNode]
-
-    # Nodo de una rueda, escalado
-    wheelNode = sg.SceneGraphNode("wheel")
-    wheelNode.transform = tr.scale(0.22, 0.22, 0.22)
-    wheelNode.childs = [blackCircleNode, scaledGrayCircleNode]
-
-    # Nodo de la ventana, quad celeste escalado
-    windowNode = sg.SceneGraphNode("window")
-    windowNode.transform = tr.scale(0.22, 0.15, 1)
-    windowNode.childs = [blueQuadNode]
-     
-    # Rueda izquierda posicionada
-    leftWheel = sg.SceneGraphNode("lWheel")
-    leftWheel.transform = tr.translate(-0.3, -0.2, 0)
-    leftWheel.childs = [wheelNode]
-
-    # Rueda derecha posicionada
-    rightWheel = sg.SceneGraphNode("rWheel")
-    rightWheel.transform = tr.translate(0.26, -0.2, 0)
-    rightWheel.childs = [wheelNode]
-
-    # Ventana posicionada
-    translateWindow = sg.SceneGraphNode("tlWindow")
-    translateWindow.transform = tr.translate(-0.08, 0.06, 0.0)
-    translateWindow.childs = [windowNode]
-
-    # Nodo padre auto
-    carNode = sg.SceneGraphNode("car")
-    carNode.childs = [redChasisNode, translateWindow, leftWheel, rightWheel]
-
-    return carNode
 
 
 def createTextureScene(tex_pipeline):
-    gpuTree = createTextureGPUShape(bs.createTextureQuad(1, 1), tex_pipeline, "Tarea1v2/sprites/tree2.png")
-    gpuSidewalk = createTextureGPUShape(bs.createTextureQuad(1.0,3.0), tex_pipeline, "Tarea1v2/sprites/sidewalk.jpg", GL_REPEAT)
-    gpuTreeRepeat = createTextureGPUShape(bs.createTextureQuad(1, 4), tex_pipeline, "Tarea1v2/sprites/tree2.png", GL_REPEAT)
+    gpuTree = createTextureGPUShape(bs.createTextureQuad(1, 1), tex_pipeline, "Tarea1v2/sprites/tree2.png", GL_DYNAMIC_DRAW, True)
+    gpuSidewalk = createTextureGPUShape(bs.createTextureQuad(1.0,3.0), tex_pipeline, "Tarea1v2/sprites/sidewalk.jpg",GL_STATIC_DRAW, True, GL_REPEAT)
+    gpuTreeRepeat = createTextureGPUShape(bs.createTextureQuad(1, 4), tex_pipeline, "Tarea1v2/sprites/tree2.png",GL_DYNAMIC_DRAW, True, GL_REPEAT)
 
     # Nodo vereda 1
     sidewalk1Node = sg.SceneGraphNode("sidewalk")
@@ -276,7 +170,6 @@ def createScene(pipeline):
 
     # Se crean las shapes en GPU
     gpuGrayQuad = createGPUShape(bs.createColorQuad(0.5, 0.5, 0.5), pipeline) # Shape del quad gris
-    gpuBrownTriangle = createGPUShape(createColorTriangle(0.592, 0.329, 0.090), pipeline) # Shape del triangulo cafe
     gpuWhiteQuad = createGPUShape(bs.createColorQuad(1,1,1), pipeline) # Shape del quad blanco
     gpuGreenQuad =  createGPUShape(bs.createColorQuad(68/255, 168/255, 50/255), pipeline) # Shape del quad verde
     #gpuTreeQuad = createTextureGPUShape(bs.createTextureQuad(1, 1), pipeline, "Tarea1v2/sprites/tree.bmp")
