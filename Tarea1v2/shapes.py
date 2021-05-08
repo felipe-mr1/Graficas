@@ -80,6 +80,16 @@ def createTextureScene(tex_pipeline):
     gpuTree = createTextureGPUShape(bs.createTextureQuad(1, 1), tex_pipeline, "Tarea1v2/sprites/tree2.png", GL_DYNAMIC_DRAW, True)
     gpuSidewalk = createTextureGPUShape(bs.createTextureQuad(1.0,3.0), tex_pipeline, "Tarea1v2/sprites/sidewalk.jpg",GL_STATIC_DRAW, True, GL_REPEAT)
     gpuTreeRepeat = createTextureGPUShape(bs.createTextureQuad(1, 4), tex_pipeline, "Tarea1v2/sprites/tree2.png",GL_DYNAMIC_DRAW, True, GL_REPEAT)
+    gpuGate = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "Tarea1v2/sprites/gate4.png", GL_STATIC_DRAW, False)
+    gpuStore = createTextureGPUShape(bs.createTextureQuad(1, 1), tex_pipeline, "Tarea1v2/sprites/tienda.png",GL_STATIC_DRAW, False)
+
+    gateNode = sg.SceneGraphNode("gate")
+    gateNode.transform = tr.matmul([tr.translate(0.7, 0.0, 0.0),tr.uniformScale(0.25)])
+    gateNode.childs = [gpuGate]
+
+    storeNode = sg.SceneGraphNode("store")
+    storeNode.transform = tr.matmul([tr.translate(-0.8, 0.75, 0),tr.rotationZ(1.57), tr.scale(0.5,0.35,1)])
+    storeNode.childs = [gpuStore]
 
     # Nodo vereda 1
     sidewalk1Node = sg.SceneGraphNode("sidewalk")
@@ -153,7 +163,7 @@ def createTextureScene(tex_pipeline):
     forestNode.childs = [leftTreeNode, rightTreeNode]
     # Escena
     sceneNode = sg.SceneGraphNode("world")
-    sceneNode.childs = [forestNode, sidewalkNode]
+    sceneNode.childs = [forestNode, sidewalkNode, storeNode, gateNode]
 
     return sceneNode
 
@@ -164,7 +174,6 @@ def createScene(pipeline):
     gpuGrayQuad = createGPUShape(bs.createColorQuad(0.5, 0.5, 0.5), pipeline) # Shape del quad gris
     gpuWhiteQuad = createGPUShape(bs.createColorQuad(1,1,1), pipeline) # Shape del quad blanco
     gpuGreenQuad =  createGPUShape(bs.createColorQuad(68/255, 168/255, 50/255), pipeline) # Shape del quad verde
-    #gpuTreeQuad = createTextureGPUShape(bs.createTextureQuad(1, 1), pipeline, "Tarea1v2/sprites/tree.bmp")
 
     # Nodo del pasto, quad verde escalado
     grassNode = sg.SceneGraphNode("pasto")
@@ -186,38 +195,11 @@ def createScene(pipeline):
     line2Node.transform = tr.matmul([tr.translate(0, -0.5, 0),tr.scale(0.1, 0.5, 1)])
     line2Node.childs = [gpuWhiteQuad]
 
-    # Nodo vereda izq 1
-    vereda1Node = sg.SceneGraphNode("vereda1")
-    vereda1Node.transform = tr.matmul([tr.translate(0, -0.64, 0),tr.scale(0.1, 0.7, 1)])
-    vereda1Node.childs = [gpuWhiteQuad]
-
-    # Nodo vereda izq 2
-    vereda2Node = sg.SceneGraphNode("vereda2")
-    vereda2Node.transform = tr.matmul([tr.translate(0, 0.07, 0),tr.scale(0.1, 0.7, 1)])
-    vereda2Node.childs = [gpuWhiteQuad]
-
-    # Nodo vereda izq 3
-    vereda3Node = sg.SceneGraphNode("vereda3")
-    vereda3Node.transform = tr.matmul([tr.translate(0, 0.72, 0),tr.scale(0.1, 0.58, 1)])
-    vereda3Node.childs = [gpuWhiteQuad]
-
-    # Nodo vereda izq
-    veredaIzqNode = sg.SceneGraphNode("veredaIzq")
-    veredaIzqNode.transform = tr.translate(-0.55, 0.0, 0.0)
-    veredaIzqNode.childs = [vereda1Node, vereda2Node, vereda3Node]
-
-    # vereda der
-    veredaDerNode = sg.SceneGraphNode("veredaDer")
-    veredaDerNode.transform = tr.translate(0.55, 0, 0)
-    veredaDerNode.childs = [vereda1Node, vereda2Node, vereda3Node]
-
-    # Nodo vereda
-    veredaNode = sg.SceneGraphNode("vereda")
-    veredaNode.childs = [veredaDerNode, veredaIzqNode]
+    
 
     # Nodo de la calle completa
     streetNode = sg.SceneGraphNode("street")
-    streetNode.childs = [highwayNode, line1Node, line2Node, veredaNode]
+    streetNode.childs = [highwayNode, line1Node, line2Node]
 
     # Nodo del background con todos los nodos anteriores
     backGroundNode = sg.SceneGraphNode("background")

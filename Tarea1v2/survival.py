@@ -310,7 +310,10 @@ if __name__ == "__main__":
     gpuHuman = createTextureGPUShape(bs.createTextureQuad(1,1), green_pipeline, "Tarea1v2/sprites/estudiante5.png", GL_DYNAMIC_DRAW, True)
     gpuGameOver = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "Tarea1v2/sprites/game_over.png", GL_DYNAMIC_DRAW, True)
     gpuWin = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "Tarea1v2/sprites/win2.png", GL_DYNAMIC_DRAW, True)
-    gpuGate = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "Tarea1v2/sprites/gate4.png", GL_STATIC_DRAW, False)
+    #gpuGate = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "Tarea1v2/sprites/gate4.png", GL_STATIC_DRAW, False)
+    #gpuStore = createTextureGPUShape(bs.createTextureQuad(1, 1), tex_pipeline, "Tarea1v2/sprites/tienda.png",GL_STATIC_DRAW, False)
+
+    forest = createTextureScene(tex_pipeline) # arriba
 
     zombieNode = sg.SceneGraphNode("Zombie")
     zombieNode.childs = [gpuZombie]
@@ -318,30 +321,35 @@ if __name__ == "__main__":
     gameoverNode = sg.SceneGraphNode("game over")
     gameoverNode.childs = [gpuGameOver]
 
+    #gameoverNode = sg.findNode(forest,"game over")
+
     winNode = sg.SceneGraphNode("win")
     winNode.childs = [gpuWin]
 
-    gateNode = sg.SceneGraphNode("gate")
-    gateNode.transform = tr.matmul([tr.translate(0.7, 0.0, 0.0),tr.uniformScale(0.25)])
-    gateNode.childs = [gpuGate]
+    #winNode = sg.findNode(forest, "win")
+
+    #gateNode = sg.SceneGraphNode("gate")
+    #gateNode.transform = tr.matmul([tr.translate(0.7, 0.0, 0.0),tr.uniformScale(0.25)])
+    #gateNode.childs = [gpuGate]
+
+    gateNode = sg.findNode(forest, "gate")
 
     # Se instancia el modelo del hinata
     player = Player(0.2)
     player.set_model(hinataNode)
     player.set_controller(controller)
 
-    forest = createTextureScene(tex_pipeline)
-
-    gpuStore = createTextureGPUShape(bs.createTextureQuad(1, 1), tex_pipeline, "Tarea1v2/sprites/tienda.png",GL_STATIC_DRAW, False)
-    storeNode = sg.SceneGraphNode("store")
-    storeNode.transform = tr.matmul([tr.translate(-0.8, 0.75, 0),tr.rotationZ(1.57), tr.scale(0.5,0.35,1)])
-    storeNode.childs = [gpuStore]
+      
+    #storeNode = sg.SceneGraphNode("store")
+    #storeNode.transform = tr.matmul([tr.translate(-0.8, 0.75, 0),tr.rotationZ(1.57), tr.scale(0.5,0.35,1)])
+    #storeNode.childs = [gpuStore]
+    storeNode = sg.findNode(forest, "store")
     store = Store(-0.8, 0.75)
 
     # Se crean el grafo de escena con textura
 
     tex_scene = sg.SceneGraphNode("textureScene")
-    tex_scene.childs = [forest, storeNode, gateNode]
+    tex_scene.childs = [forest]
 
     tex_scene_green = sg.SceneGraphNode("green scene")
     tex_scene_green.childs = [hinataNode]
