@@ -91,9 +91,10 @@ class Humanoid():
 
     def update(self):
         # Se posiciona el nodo referenciado
-        self.pos[0] = ((1-(self.t))**3)*self.point1[0] + (self.t)*((1-(self.t))**2)*self.point2[0] + ((self.t)**2)*(1-(self.t))*self.point3[0] + ((self.t)**3)*self.point4[0]
-        self.pos[1] = ((1-(self.t))**3)*self.point1[1] + (self.t)*((1-(self.t))**2)*self.point2[1] + ((self.t)**2)*(1-(self.t))*self.point3[1] + ((self.t)**3)*self.point4[1]
-        self.model.transform = tr.matmul([tr.translate(self.pos[0], self.pos[1], 0), tr.scale(self.size, self.size, 1)])
+        if self.t < 1.1:
+            self.pos[0] = ((1-(self.t))**3)*self.point1[0] + (self.t)*((1-(self.t))**2)*self.point2[0] + ((self.t)**2)*(1-(self.t))*self.point3[0] + ((self.t)**3)*self.point4[0]
+            self.pos[1] = ((1-(self.t))**3)*self.point1[1] + (self.t)*((1-(self.t))**2)*self.point2[1] + ((self.t)**2)*(1-(self.t))*self.point3[1] + ((self.t)**3)*self.point4[1]
+            self.model.transform = tr.matmul([tr.translate(self.pos[0], self.pos[1], 0), tr.scale(self.size, self.size, 1)])
         #self.model.transform = tr.matmul([tr.translate(self.pos[0], self.pos[1], 0), tr.scale(self.size, self.size, 1)])
 
     def collision(self, cargas):

@@ -100,89 +100,67 @@ class infectedPipeline:
 
 class switchingColorPipeline:
 
-
     def __init__(self):
-
 
         vertex_shader = """
             #version 130
+            
+            uniform mat4 transform;
 
             in vec3 position;
-
             in vec3 color;
-
 
             out vec3 newColor;
 
             void main()
             {
-                gl_Position = vec4(position, 1.0f);
+                gl_Position = transform * vec4(position, 1.0f);
                 newColor = color;
             }
-
             """
-
 
         fragment_shader = """
             #version 130
-
-            uniform float switchColor;
-            
             in vec3 newColor;
 
             out vec4 outColor;
 
+            uniform float switchColor;
+
             void main()
             {
                 outColor = vec4(newColor, 1.0f);
-                if(switchColor > 0.0){
-                    if(newColor.b>0){
+                if(switchColor>0.0){
+                    if(outColor.b>0){
                         outColor.b = 0.5f;
-                    } else{
+                    } else {
                         outColor.g = 0.5f;
-                    }
-                } else {
-                    if(newColor.b>0){
-                        outColor.b = 1.0f;
-                    } else{
-                        outColor.g = 1.0f;
                     }
                 }
             }
             """
 
-
         self.shaderProgram = OpenGL.GL.shaders.compileProgram(
-            OpenGL.GL.shaders.compileShader(vertex_shader, GL_VERTEX_SHADER),
-            OpenGL.GL.shaders.compileShader(fragment_shader, GL_FRAGMENT_SHADER))
-
-
+            OpenGL.GL.shaders.compileShader(vertex_shader, OpenGL.GL.GL_VERTEX_SHADER),
+            OpenGL.GL.shaders.compileShader(fragment_shader, OpenGL.GL.GL_FRAGMENT_SHADER))
 
     def setupVAO(self, gpuShape):
         glBindVertexArray(gpuShape.vao)
+
         glBindBuffer(GL_ARRAY_BUFFER, gpuShape.vbo)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gpuShape.ebo)
 
         # 3d vertices + rgb color specification => 3*4 + 3*4 = 24 bytes
-
         position = glGetAttribLocation(self.shaderProgram, "position")
-
         glVertexAttribPointer(position, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(0))
-
         glEnableVertexAttribArray(position)
         
-
         color = glGetAttribLocation(self.shaderProgram, "color")
-
         glVertexAttribPointer(color, 3, GL_FLOAT, GL_FALSE, 24, ctypes.c_void_p(12))
-
         glEnableVertexAttribArray(color)
 
-
         # Unbinding current vao
-
         glBindVertexArray(0)
-
 
 
     def drawCall(self, gpuShape, mode=GL_TRIANGLES):
@@ -191,7 +169,7 @@ class switchingColorPipeline:
         # Binding the VAO and executing the draw call
         glBindVertexArray(gpuShape.vao)
         glDrawElements(mode, gpuShape.size, GL_UNSIGNED_INT, None)
-
+        
         # Unbind the current VAO
         glBindVertexArray(0)
 
@@ -298,11 +276,13 @@ if __name__ == "__main__":
 
     # Grafo de power ups
     powerUpNode = sg.SceneGraphNode("Power UP")
+    powerUpNode.transform = tr.matmul([tr.translate(0.9, -0.2, 0.0),tr.uniformScale(0.3)])
     powerUpNode.childs = [gpuPowerPack]
 
     # Grafo paraHealth
     healthNode= sg.SceneGraphNode("health")
-    healthNode.childs = [gpuPowerPack]
+    healthNode.transform = tr.matmul([tr.translate(0.9, 0.2, 0.0),tr.uniformScale(0.2)])
+    healthNode.childs = [gpuHealthPack]
 
     #GrafoPower
     bonusNode= sg.SceneGraphNode("bonus")
@@ -330,7 +310,7 @@ if __name__ == "__main__":
     gpuHuman = createTextureGPUShape(bs.createTextureQuad(1,1), green_pipeline, "Tarea1v2/sprites/estudiante5.png", GL_DYNAMIC_DRAW, True)
     gpuGameOver = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "Tarea1v2/sprites/game_over.png", GL_DYNAMIC_DRAW, True)
     gpuWin = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "Tarea1v2/sprites/win2.png", GL_DYNAMIC_DRAW, True)
-
+    gpuGate = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "Tarea1v2/sprites/gate4.png", GL_STATIC_DRAW, False)
 
     zombieNode = sg.SceneGraphNode("Zombie")
     zombieNode.childs = [gpuZombie]
@@ -340,6 +320,10 @@ if __name__ == "__main__":
 
     winNode = sg.SceneGraphNode("win")
     winNode.childs = [gpuWin]
+
+    gateNode = sg.SceneGraphNode("gate")
+    gateNode.transform = tr.matmul([tr.translate(0.7, 0.0, 0.0),tr.uniformScale(0.25)])
+    gateNode.childs = [gpuGate]
 
     # Se instancia el modelo del hinata
     player = Player(0.2)
@@ -357,7 +341,7 @@ if __name__ == "__main__":
     # Se crean el grafo de escena con textura
 
     tex_scene = sg.SceneGraphNode("textureScene")
-    tex_scene.childs = [forest, storeNode] # Hinata node
+    tex_scene.childs = [forest, storeNode, gateNode]
 
     tex_scene_green = sg.SceneGraphNode("green scene")
     tex_scene_green.childs = [hinataNode]
@@ -369,8 +353,8 @@ if __name__ == "__main__":
     # glfw will swap buffers as soon as possible
     glfw.swap_interval(0)
     t0 = glfw.get_time()
-
     g0 = t0
+    s0 = t0
 
     # Inputs del usuario
     var_z = int(sys.argv[1]) # Cantidad de zombies
@@ -387,6 +371,7 @@ if __name__ == "__main__":
         t1 = glfw.get_time()
         delta = t1 -t0
         gelta = t1 -g0
+        selta = t1 -s0
         t0 = t1
 
         # Measuring performance
@@ -408,9 +393,13 @@ if __name__ == "__main__":
         player.collision(enemies)
         if player.objective(store) and notGameOver:
             tex_scene.childs += [winNode]
-            notGameOver = True
+            notGameOver = False
+            
 
         winNode.transform = tr.matmul([tr.uniformScale(1 + 0.5*np.cos(-t1)), tr.rotationZ(-t1*0.5)])
+        if player.zombie == 1:
+                winNode.transform = tr.translate(1.5,0.0,0.0)
+                notGameOver = not notGameOver
         # Se llama al metodo del player para actualizar su posicion
         player.update(delta)
    
@@ -449,21 +438,15 @@ if __name__ == "__main__":
             # y existe una probabilidad de P de perder
             if(player.infected == 1 and prob < var_p):
                 player.zombie = 1
-                player.childs = [gpuZombie]
-                player.set_model(zombieNode)
+                player.model.childs = [gpuZombie] ##
+                #player.childs = [gpuZombie]
+                #player.set_model(zombieNode)
             # Cada T segundos se verifica si un humano pasa a ser zombie
             for carga in enemies:
                 new_prob = random.uniform(0, 1)
                 if(carga.zombie == 0 and carga.infected > 0 and new_prob < var_p):
                     carga.zombie = 1
                     carga.model.childs = [gpuZombie]
-            """
-            if switch:
-                glUniform1f(glGetUniformLocation(switchingPipeline.shaderProgram, "switchColor"), 1.0)
-            else:
-                glUniform1f(glGetUniformLocation(switchingPipeline.shaderProgram, "switchColor"), 0.0)
-            """
-            switch = not switch
             g0 = t1
 
         for character in enemies:
@@ -487,6 +470,7 @@ if __name__ == "__main__":
 
         # Se dibuja el grafo de escena con texturas
         glUseProgram(tex_pipeline.shaderProgram)
+        
         sg.drawSceneGraphNode(tex_scene, tex_pipeline, "transform")
 
         glUseProgram(green_pipeline.shaderProgram)
@@ -507,10 +491,15 @@ if __name__ == "__main__":
 
         glUseProgram(switchingPipeline.shaderProgram)
 
-        #sg.drawSceneGraphNode(bonusNode, switchingPipeline, "switchColor")
+        if selta>2:
+            if switch:
+                glUniform1f(glGetUniformLocation(switchingPipeline.shaderProgram, "switchColor"), float(1))
+            else:
+                glUniform1f(glGetUniformLocation(switchingPipeline.shaderProgram, "switchColor"), float(0))
+            switch = not switch
+            s0= t1
 
-        #switchingPipeline.drawCall(gpuHealthPack, GL_LINES)
-        #switchingPipeline.drawCall(gpuPowerPack, GL_LINES)
+        sg.drawSceneGraphNode(bonusNode, switchingPipeline, "transform")
 
         # Once the drawing is rendered, buffers are swap so an uncomplete drawing is never seen.
         glfw.swap_buffers(window)
@@ -519,5 +508,6 @@ if __name__ == "__main__":
     supahScene.clear()
     mainScene2.clear()
     tex_scene.clear()
+    tex_scene_green.clear()
     
     glfw.terminate()

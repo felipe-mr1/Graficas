@@ -34,51 +34,43 @@ def createTextureGPUShape(shape, pipeline, path, drawMode, mipmap, mode = GL_CLA
 def createCrossShape():
     vertices = [
         -0.2, 0.6, 0.0, 0.0, 1.0, 0.0,
-        -0.2, 0.2, 0.0, 0.0, 1.0, 0.0,
+        
         -0.6, 0.2, 0.0, 0.0, 1.0, 0.0,
         -0.6, -0.2, 0.0, 0.0, 1.0, 0.0,
-        -0.2, -0.2, 0.0, 0.0, 1.0, 0.0,
+        
         -0.2, -0.6, 0.0, 0.0, 1.0, 0.0,
         0.2, -0.6, 0.0, 0.0, 1.0, 0.0,
-        0.2, -0.2, 0.0, 0.0, 1.0, 0.0,
+        
         0.6, -0.2, 0.0, 0.0, 1.0, 0.0,
         0.6, 0.2, 0.0, 0.0, 1.0, 0.0,
-        0.2, 0.2, 0.0, 0.0, 1.0, 0.0,
+        
         0.2, 0.6, 0.0, 0.0, 1.0, 0.0
     ]
 
     indices = [
-        0,1,
-        1,2,
-        2,3,
-        3,4,
-        4,5,
-        5,6,
-        6,7,
-        7,8,
-        8,9,
-        9,10,
-        11,0
+        0,3,4,
+        4,7,0,
+
+        1,2,5,
+        5,6,1
     ]
     return bs.Shape(vertices,indices)
 
 def createPowerUp():
     vertices = [
-        0.0, 0.5, 0.0, 0.0, 0.0, 1.0,
-        -0.3, -0.2, 0.0, 0.0, 0.0, 1.0,
-        0.2, -0.2, 0.0, 0.0, 0.0, 1.0,
+        0.0, 0.5, 0.0, 1.0, 1.0, 1.0,
+        -0.3, -0.1, 0.0, 0.0, 0.0, 1.0,
+        0.12, -0.1, 0.0, 0.0, 0.0, 1.0,
         -0.1, -0.5, 0.0, 0.0, 0.0, 1.0,
-        0.4, 0.2, 0.0, 0.0, 0.0, 1.0, 
-        -0.1, 0.2, 0.0, 0.0, 0.0, 1.0
+        0.4, 0.1, 0.0, 0.0, 0.0, 1.0, 
+        -0.07, 0.1, 0.0, 1.0, 1.0, 1.0
     ]
 
     indices = [
-        0,1,
-        1,2,
-        2,3,
-        3,4,
-        4,5,
-        5,0
+        0,1,5,
+        5,1,4,
+        4,1,2,
+        2,3,4
     ]
 
     return bs.Shape(vertices, indices)
@@ -226,15 +218,10 @@ def createScene(pipeline):
     # Nodo de la calle completa
     streetNode = sg.SceneGraphNode("street")
     streetNode.childs = [highwayNode, line1Node, line2Node, veredaNode]
-    
-    # nodo de la linea de pista, quad blanco escalado y posicionado
-    lineNode = sg.SceneGraphNode("line")
-    lineNode.transform = tr.matmul([tr.translate(0, -0.65, 0), tr.scale(4, 0.02, 1)])
-    lineNode.childs = [gpuWhiteQuad]
 
     # Nodo del background con todos los nodos anteriores
     backGroundNode = sg.SceneGraphNode("background")
-    backGroundNode.childs = [grassNode, highwayNode, streetNode] # sunNode pasa abajo
+    backGroundNode.childs = [grassNode, highwayNode, streetNode] # sunNode pasa abajo # tengo que quitar el highway
 
     # Nodo padre de la escena
     sceneNode = sg.SceneGraphNode("world")
