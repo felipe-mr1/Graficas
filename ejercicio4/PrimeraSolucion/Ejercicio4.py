@@ -251,7 +251,10 @@ if __name__ == "__main__":
         # Using GLFW to check for input events
         glfw.poll_events()
 
-        controller.actual_rain = (controller.actual_rain + 1)%10  # continuous rain
+        #int i = glfw.get_time()
+
+        #controller.actual_rain = (controller.actual_rain + 1)%10  # continuous rain
+        controller.actual_rain = (controller.actual_rain + 0.5)%10
 
         if (controller.fillPolygon):
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
