@@ -77,11 +77,11 @@ def createPowerUp():
 
 
 def createTextureScene(tex_pipeline):
-    gpuTree = createTextureGPUShape(bs.createTextureQuad(1, 1), tex_pipeline, "Tarea1v2/sprites/tree2.png", GL_DYNAMIC_DRAW, True)
-    gpuSidewalk = createTextureGPUShape(bs.createTextureQuad(1.0,3.0), tex_pipeline, "Tarea1v2/sprites/sidewalk.jpg",GL_STATIC_DRAW, True, GL_REPEAT)
-    gpuTreeRepeat = createTextureGPUShape(bs.createTextureQuad(1, 4), tex_pipeline, "Tarea1v2/sprites/tree2.png",GL_DYNAMIC_DRAW, True, GL_REPEAT)
-    gpuGate = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "Tarea1v2/sprites/gate4.png", GL_STATIC_DRAW, False)
-    gpuStore = createTextureGPUShape(bs.createTextureQuad(1, 1), tex_pipeline, "Tarea1v2/sprites/tienda.png",GL_STATIC_DRAW, False)
+    gpuTree = createTextureGPUShape(bs.createTextureQuad(1, 1), tex_pipeline, "sprites/tree2.png", GL_DYNAMIC_DRAW, True)
+    gpuSidewalk = createTextureGPUShape(bs.createTextureQuad(1.0,3.0), tex_pipeline, "sprites/sidewalk.jpg",GL_STATIC_DRAW, True, GL_REPEAT)
+    gpuTreeRepeat = createTextureGPUShape(bs.createTextureQuad(1, 4), tex_pipeline, "sprites/tree2.png",GL_DYNAMIC_DRAW, True, GL_REPEAT)
+    gpuGate = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "sprites/gate4.png", GL_STATIC_DRAW, False)
+    gpuStore = createTextureGPUShape(bs.createTextureQuad(1, 1), tex_pipeline, "sprites/tienda.png",GL_STATIC_DRAW, False)
 
     gateNode = sg.SceneGraphNode("gate")
     gateNode.transform = tr.matmul([tr.translate(0.7, 0.0, 0.0),tr.uniformScale(0.25)])

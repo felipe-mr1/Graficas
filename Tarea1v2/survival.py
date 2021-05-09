@@ -224,7 +224,6 @@ def on_key(window, key, scancode, action, mods):
     # Caso de detecar la barra espaciadora, se utilizan los lentes
     if key == glfw.KEY_SPACE and action ==glfw.PRESS:
         controller.glasses = not controller.glasses
-        #controller.fillPolygon = not controller.fillPolygon
 
     # Caso en que se cierra la ventana
     elif key == glfw.KEY_ESCAPE and action ==glfw.PRESS:
@@ -270,7 +269,7 @@ if __name__ == "__main__":
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
     # Shape de hinata
-    gpuHinata = createTextureGPUShape(bs.createTextureQuad(1, 1), green_pipeline, "Tarea1v2/sprites/hinata2.png", GL_DYNAMIC_DRAW, True)
+    gpuHinata = createTextureGPUShape(bs.createTextureQuad(1, 1), green_pipeline, "sprites/hinata2.png", GL_DYNAMIC_DRAW, True)
     gpuHealthPack =createGPUShape(createCrossShape(), switchingPipeline,GL_STREAM_DRAW)
     gpuPowerPack =createGPUShape(createPowerUp(), switchingPipeline,GL_STREAM_DRAW)
 
@@ -305,13 +304,11 @@ if __name__ == "__main__":
     
     # Shape con texturas
 
-    #garbage = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "Tarea1v2/sprites/sidewalk.jpg")
-    gpuZombie = createTextureGPUShape(bs.createTextureQuad(1,1), green_pipeline, "Tarea1v2/sprites/zombie.png", GL_DYNAMIC_DRAW, True)
-    gpuHuman = createTextureGPUShape(bs.createTextureQuad(1,1), green_pipeline, "Tarea1v2/sprites/estudiante5.png", GL_DYNAMIC_DRAW, True)
-    gpuGameOver = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "Tarea1v2/sprites/game_over.png", GL_DYNAMIC_DRAW, True)
-    gpuWin = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "Tarea1v2/sprites/win2.png", GL_DYNAMIC_DRAW, True)
-    #gpuGate = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "Tarea1v2/sprites/gate4.png", GL_STATIC_DRAW, False)
-    #gpuStore = createTextureGPUShape(bs.createTextureQuad(1, 1), tex_pipeline, "Tarea1v2/sprites/tienda.png",GL_STATIC_DRAW, False)
+    gpuZombie = createTextureGPUShape(bs.createTextureQuad(1,1), green_pipeline, "sprites/zombie.png", GL_DYNAMIC_DRAW, True)
+    gpuHuman = createTextureGPUShape(bs.createTextureQuad(1,1), green_pipeline, "sprites/estudiante5.png", GL_DYNAMIC_DRAW, True)
+    gpuGameOver = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "sprites/game_over.png", GL_DYNAMIC_DRAW, True)
+    gpuWin = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "sprites/win2.png", GL_DYNAMIC_DRAW, True)
+
 
     forest = createTextureScene(tex_pipeline) # arriba
 
@@ -321,16 +318,9 @@ if __name__ == "__main__":
     gameoverNode = sg.SceneGraphNode("game over")
     gameoverNode.childs = [gpuGameOver]
 
-    #gameoverNode = sg.findNode(forest,"game over")
 
     winNode = sg.SceneGraphNode("win")
     winNode.childs = [gpuWin]
-
-    #winNode = sg.findNode(forest, "win")
-
-    #gateNode = sg.SceneGraphNode("gate")
-    #gateNode.transform = tr.matmul([tr.translate(0.7, 0.0, 0.0),tr.uniformScale(0.25)])
-    #gateNode.childs = [gpuGate]
 
     gateNode = sg.findNode(forest, "gate")
 
@@ -339,10 +329,6 @@ if __name__ == "__main__":
     player.set_model(hinataNode)
     player.set_controller(controller)
 
-      
-    #storeNode = sg.SceneGraphNode("store")
-    #storeNode.transform = tr.matmul([tr.translate(-0.8, 0.75, 0),tr.rotationZ(1.57), tr.scale(0.5,0.35,1)])
-    #storeNode.childs = [gpuStore]
     storeNode = sg.findNode(forest, "store")
     store = Store(-0.8, 0.75)
 
@@ -382,6 +368,8 @@ if __name__ == "__main__":
         selta = t1 -s0
         t0 = t1
 
+        assert var_p < 1 and var_p > 0, "Ingrese valor entre 0 y 1 para la variable P (cuarto parametro)"
+
         # Measuring performance
         perfMonitor.update(glfw.get_time())
         glfw.set_window_title(window, title + str(perfMonitor))
@@ -398,7 +386,7 @@ if __name__ == "__main__":
         glClear(GL_COLOR_BUFFER_BIT)
 
         # Se llama al metodo del player para detectar colisiones
-        player.collision(enemies)
+        #player.collision(enemies)
         if player.objective(store) and notGameOver:
             tex_scene.childs += [winNode]
             notGameOver = False
@@ -465,11 +453,11 @@ if __name__ == "__main__":
             if character.zombie == 1:
                 character.childs = [gpuZombie]
                 character.model.childs = [gpuZombie]
-                #x.set_model(zombieNode)
 
         if player.zombie==1 and notGameOver:
-            hinataNode.childs = [gpuZombie]
-            player.set_model(zombieNode)
+            #hinataNode.childs = [gpuZombie]
+            #player.set_model(zombieNode)
+            player.model.childs = [gpuZombie]
             tex_scene.childs+=[gameoverNode]
             notGameOver = False
 
@@ -478,11 +466,10 @@ if __name__ == "__main__":
 
         # Se dibuja el grafo de escena con texturas
         glUseProgram(tex_pipeline.shaderProgram)
-        
         sg.drawSceneGraphNode(tex_scene, tex_pipeline, "transform")
 
+        # Se usa el siguiente pipeline
         glUseProgram(green_pipeline.shaderProgram)
-
 
         for character in enemies:
             if controller.glasses:
@@ -497,6 +484,7 @@ if __name__ == "__main__":
             glUniform1f(glGetUniformLocation(green_pipeline.shaderProgram, "infectedd"), 0.0)
         sg.drawSceneGraphNode(hinataNode, green_pipeline, "transform")
 
+        # Se usa el siguiente pipeline
         glUseProgram(switchingPipeline.shaderProgram)
 
         if selta>2:

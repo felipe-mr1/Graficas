@@ -9,13 +9,13 @@ class Player():
     # Clase que contiene al modelo del player / auro
     def __init__(self, size):
         self.pos = [0,-0.65] # Posicion en el escenario
-        self.vel = [1,1] # Velocidad de desplazamiento
+        self.vel = [0.3,0.3] # Velocidad de desplazamiento
         self.model = None # Referencia al grafo de escena asociado
         self.controller = None # Referencia del controlador, para acceder a sus variables
         self.size = size # Escala a aplicar al nodo 
         self.radio = 0.1 # distancia para realiozar los calculos de colision
-        self.infected = 0.0
-        self.zombie = 0
+        self.infected = 0.0 # atributo de infeccion
+        self.zombie = 0 # atributo de estado
 
     def set_model(self, new_model):
         # Se obtiene una referencia a uno nodo
@@ -46,18 +46,15 @@ class Player():
 
     def collision(self, cargas):
         # Funcion para detectar las colisiones con las cargas
-        # Se recorren las cargas 
+        # Se recorren las cargas
         for carga in cargas:
             # si la distancia a la carga es menor que la suma de los radios ha ocurrido en la colision
             if (self.radio+carga.radio)**2 > ((self.pos[0]- carga.pos[0])**2 + (self.pos[1]-carga.pos[1])**2 ):
                 if(carga.zombie==1):
                     self.zombie=1
                     #self.model = self.zmodel
-
                 if carga.infected > 0:
                     self.infected = 1
-                #print("CHOQUE")
-
                 return
         
 
@@ -69,7 +66,7 @@ class Player():
         
 class Humanoid():
 
-    # Clase para contener las caracteristicas de un objeto que representa una carga 
+    # Clase para contener las caracteristicas de un objeto que representa un humanoide: estudiante/zombie
 
     def __init__(self, posx, posy, size, typeOfNpc, aName):
         self.pos = [posx, posy]
@@ -95,7 +92,6 @@ class Humanoid():
             self.pos[0] = ((1-(self.t))**3)*self.point1[0] + (self.t)*((1-(self.t))**2)*self.point2[0] + ((self.t)**2)*(1-(self.t))*self.point3[0] + ((self.t)**3)*self.point4[0]
             self.pos[1] = ((1-(self.t))**3)*self.point1[1] + (self.t)*((1-(self.t))**2)*self.point2[1] + ((self.t)**2)*(1-(self.t))*self.point3[1] + ((self.t)**3)*self.point4[1]
             self.model.transform = tr.matmul([tr.translate(self.pos[0], self.pos[1], 0), tr.scale(self.size, self.size, 1)])
-        #self.model.transform = tr.matmul([tr.translate(self.pos[0], self.pos[1], 0), tr.scale(self.size, self.size, 1)])
 
     def collision(self, cargas):
         for carga in cargas:
@@ -107,6 +103,7 @@ class Humanoid():
                         self.zombie = 1
 
 class Store():
+    # clase para representar al objetivo
     def __init__(self, posx, posy):
         self.pos = [posx, posy]
         self.radio = 0.3
