@@ -173,7 +173,6 @@ class switchingColorPipeline:
         # Unbind the current VAO
         glBindVertexArray(0)
 
-
 # Clase controlador con variables para manejar el estado de ciertos botone
 class Controller:
     def __init__(self):
@@ -183,6 +182,7 @@ class Controller:
         self.is_a_pressed = False
         self.is_d_pressed = False
         self.glasses = False
+        self.sprint = False
 
 
 # we will use the global controller as communication with the callback function
@@ -222,8 +222,17 @@ def on_key(window, key, scancode, action, mods):
             controller.is_d_pressed = False
 
     # Caso de detecar la barra espaciadora, se utilizan los lentes
-    if key == glfw.KEY_SPACE and action ==glfw.PRESS:
-        controller.glasses = not controller.glasses
+    if key == glfw.KEY_SPACE:
+        if action ==glfw.PRESS:
+            controller.glasses = True
+        elif action == glfw.RELEASE:
+            controller.glasses = False
+
+    if key == glfw.KEY_LEFT_SHIFT:
+        if action ==glfw.PRESS:
+            controller.sprint = True
+        elif action == glfw.RELEASE:
+            controller.sprint = False
 
     # Caso en que se cierra la ventana
     elif key == glfw.KEY_ESCAPE and action ==glfw.PRESS:
@@ -268,8 +277,8 @@ if __name__ == "__main__":
     glEnable(GL_BLEND)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
-    # Shape de hinata
-    gpuHinata = createTextureGPUShape(bs.createTextureQuad(1, 1), green_pipeline, "sprites/hinata2.png", GL_DYNAMIC_DRAW, True)
+    # Shape de Jill
+    gpuJill = createTextureGPUShape(bs.createTextureQuad(1, 1), green_pipeline, "sprites/hinata2.png", GL_STATIC_DRAW, True)
     gpuHealthPack =createGPUShape(createCrossShape(), switchingPipeline,GL_STREAM_DRAW)
     gpuPowerPack =createGPUShape(createPowerUp(), switchingPipeline,GL_STREAM_DRAW)
 
@@ -287,28 +296,24 @@ if __name__ == "__main__":
     bonusNode= sg.SceneGraphNode("bonus")
     bonusNode.childs = [powerUpNode,healthNode]
     
-    # Grafo de escena para Hinata
-    hinataNode = sg.SceneGraphNode("Hinata")
-    hinataNode.childs = [gpuHinata]
+    # Grafo de escena para Jill
+    jillNode = sg.SceneGraphNode("Jill")
+    jillNode.childs = [gpuJill]
     
     # Grafo de escena del background
-    mainScene2 = createScene(pipeline)
-    mundo2 = sg.SceneGraphNode("2")
-    mundo2.childs += [mainScene2]
+    mainScene = createScene(pipeline)
+    mundo = sg.SceneGraphNode("mundo")
+    mundo.childs += [mainScene]
     
     worlds = sg.SceneGraphNode("paisaje")
-    worlds.childs += [mundo2]
-
-    supahScene= sg.SceneGraphNode("entire_world")
-    supahScene.childs += [worlds]
+    worlds.childs += [mundo]
     
     # Shape con texturas
 
-    gpuZombie = createTextureGPUShape(bs.createTextureQuad(1,1), green_pipeline, "sprites/zombie.png", GL_DYNAMIC_DRAW, True)
-    gpuHuman = createTextureGPUShape(bs.createTextureQuad(1,1), green_pipeline, "sprites/estudiante5.png", GL_DYNAMIC_DRAW, True)
-    gpuGameOver = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "sprites/game_over.png", GL_DYNAMIC_DRAW, True)
-    gpuWin = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "sprites/win2.png", GL_DYNAMIC_DRAW, True)
-
+    gpuZombie = createTextureGPUShape(bs.createTextureQuad(1,1), green_pipeline, "sprites/zombie.png", GL_STATIC_DRAW, True)
+    gpuHuman = createTextureGPUShape(bs.createTextureQuad(1,1), green_pipeline, "sprites/estudiante5.png", GL_STATIC_DRAW, True)
+    gpuGameOver = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "sprites/game_over.png", GL_STATIC_DRAW, True)
+    gpuWin = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "sprites/win2.png", GL_STATIC_DRAW, True)
 
     forest = createTextureScene(tex_pipeline) # arriba
 
@@ -318,15 +323,14 @@ if __name__ == "__main__":
     gameoverNode = sg.SceneGraphNode("game over")
     gameoverNode.childs = [gpuGameOver]
 
-
     winNode = sg.SceneGraphNode("win")
     winNode.childs = [gpuWin]
 
     gateNode = sg.findNode(forest, "gate")
 
-    # Se instancia el modelo del hinata
+    # Se instancia el modelo del Jill
     player = Player(0.2)
-    player.set_model(hinataNode)
+    player.set_model(jillNode)
     player.set_controller(controller)
 
     storeNode = sg.findNode(forest, "store")
@@ -338,7 +342,10 @@ if __name__ == "__main__":
     tex_scene.childs = [forest]
 
     tex_scene_green = sg.SceneGraphNode("green scene")
-    tex_scene_green.childs = [hinataNode]
+    tex_scene_green.childs = [jillNode]
+
+    supahScene= sg.SceneGraphNode("entire_world")
+    supahScene.childs += [worlds, tex_scene, tex_scene_green]
 
     # Lista con todos los NPC's
     enemies = []
@@ -357,6 +364,7 @@ if __name__ == "__main__":
     var_p = float(sys.argv[4]) # Probabilidad de que un humano zombifique cada T segundos
 
     notGameOver = True
+    gameOver = False
     switch = True
 
     # Application loop
@@ -389,19 +397,24 @@ if __name__ == "__main__":
         #player.collision(enemies)
         if player.objective(store) and notGameOver:
             tex_scene.childs += [winNode]
-            notGameOver = False
-            
+            notGameOver = not notGameOver
+            gameOver = True
 
+        if player.zombie == 1 and gameOver:
+            player.model.childs = [gpuZombie]
+            winNode.childs = []
+            tex_scene.childs+= [gameoverNode]
+            gameOver = not gameOver
+
+            
         winNode.transform = tr.matmul([tr.uniformScale(1 + 0.5*np.cos(-t1)), tr.rotationZ(-t1*0.5)])
-        if player.zombie == 1:
-                winNode.transform = tr.translate(1.5,0.0,0.0)
-                notGameOver = not notGameOver
+
         # Se llama al metodo del player para actualizar su posicion
         player.update(delta)
    
         # Se dibuja el grafo de escena principal
         glUseProgram(pipeline.shaderProgram)
-        sg.drawSceneGraphNode(supahScene, pipeline, "transform")
+        sg.drawSceneGraphNode(worlds, pipeline, "transform")
 
         shearing = sg.findNode(tex_scene, "shearing")
         shearing.transform = tr.shearing(0, 0.1 * np.cos(t1), 0, 0, 0, 0)
@@ -430,19 +443,18 @@ if __name__ == "__main__":
                 newHuman.update()
                 enemies +=[newHuman]
                 var_h-=1
-            # Cada T segundos se verifica si hinata esta contagiada
+            # Cada T segundos se verifica si Jill esta contagiada
             # y existe una probabilidad de P de perder
             if(player.infected == 1 and prob < var_p):
                 player.zombie = 1
                 player.model.childs = [gpuZombie] ##
-                #player.childs = [gpuZombie]
-                #player.set_model(zombieNode)
             # Cada T segundos se verifica si un humano pasa a ser zombie
             for carga in enemies:
-                new_prob = random.uniform(0, 1)
-                if(carga.zombie == 0 and carga.infected > 0 and new_prob < var_p):
-                    carga.zombie = 1
-                    carga.model.childs = [gpuZombie]
+                if carga.zombie == 0 and carga.infected > 0:
+                    new_prob = random.uniform(0, 1)
+                    if(new_prob < var_p):
+                        carga.zombie = 1
+                        carga.model.childs = [gpuZombie]
             g0 = t1
 
         for character in enemies:
@@ -453,15 +465,17 @@ if __name__ == "__main__":
             if character.zombie == 1:
                 character.childs = [gpuZombie]
                 character.model.childs = [gpuZombie]
+            if character.t > 1.1:
+                character.model.childs = []
+                #tex_scene_green.childs.remove(character.model)
 
         if player.zombie==1 and notGameOver:
-            #hinataNode.childs = [gpuZombie]
-            #player.set_model(zombieNode)
             player.model.childs = [gpuZombie]
             tex_scene.childs+=[gameoverNode]
+            winNode.clear()
             notGameOver = False
 
-        gameoverNode.transform = tr.scale(1 + 0.5*np.cos(t1), 1 + 0.2*np.sin(t1), 1)
+        gameoverNode.transform = tr.scale(1 + 0.5*np.cos(t1), 1 + 0.2*np.sin(t1), 0)
         player.collision(enemies)
 
         # Se dibuja el grafo de escena con texturas
@@ -482,7 +496,7 @@ if __name__ == "__main__":
             glUniform1f(glGetUniformLocation(green_pipeline.shaderProgram, "infectedd"), float(player.infected))
         else:
             glUniform1f(glGetUniformLocation(green_pipeline.shaderProgram, "infectedd"), 0.0)
-        sg.drawSceneGraphNode(hinataNode, green_pipeline, "transform")
+        sg.drawSceneGraphNode(jillNode, green_pipeline, "transform")
 
         # Se usa el siguiente pipeline
         glUseProgram(switchingPipeline.shaderProgram)
@@ -495,6 +509,15 @@ if __name__ == "__main__":
             switch = not switch
             s0= t1
 
+        switchingPipeline.drawCall(gpuHealthPack, GL_LINES)
+        switchingPipeline.drawCall(gpuPowerPack, GL_TRIANGLE_STRIP)
+
+        # sprint
+        if controller.sprint:
+            player.vel = [0.7,0.7]
+        else:
+            player.vel = [0.3,0.3]
+
         sg.drawSceneGraphNode(bonusNode, switchingPipeline, "transform")
 
         # Once the drawing is rendered, buffers are swap so an uncomplete drawing is never seen.
@@ -502,7 +525,8 @@ if __name__ == "__main__":
 
     # freeing GPU memory
     supahScene.clear()
-    mainScene2.clear()
+    mainScene.clear()
+    worlds.clear()
     tex_scene.clear()
     tex_scene_green.clear()
     

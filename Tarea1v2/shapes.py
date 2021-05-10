@@ -77,9 +77,9 @@ def createPowerUp():
 
 
 def createTextureScene(tex_pipeline):
-    gpuTree = createTextureGPUShape(bs.createTextureQuad(1, 1), tex_pipeline, "sprites/tree2.png", GL_DYNAMIC_DRAW, True)
+    gpuTree = createTextureGPUShape(bs.createTextureQuad(1, 1), tex_pipeline, "sprites/tree2.png", GL_STATIC_DRAW, True)
     gpuSidewalk = createTextureGPUShape(bs.createTextureQuad(1.0,3.0), tex_pipeline, "sprites/sidewalk.jpg",GL_STATIC_DRAW, True, GL_REPEAT)
-    gpuTreeRepeat = createTextureGPUShape(bs.createTextureQuad(1, 4), tex_pipeline, "sprites/tree2.png",GL_DYNAMIC_DRAW, True, GL_REPEAT)
+    gpuTreeRepeat = createTextureGPUShape(bs.createTextureQuad(1, 4), tex_pipeline, "sprites/tree2.png",GL_STATIC_DRAW, True, GL_REPEAT)
     gpuGate = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "sprites/gate4.png", GL_STATIC_DRAW, False)
     gpuStore = createTextureGPUShape(bs.createTextureQuad(1, 1), tex_pipeline, "sprites/tienda.png",GL_STATIC_DRAW, False)
 
