@@ -228,6 +228,7 @@ def on_key(window, key, scancode, action, mods):
         elif action == glfw.RELEASE:
             controller.glasses = False
 
+    # Caso de detectar el shift izq, actualiza la variable
     if key == glfw.KEY_LEFT_SHIFT:
         if action ==glfw.PRESS:
             controller.sprint = True
@@ -309,11 +310,10 @@ if __name__ == "__main__":
     worlds.childs += [mundo]
     
     # Shape con texturas
-
     gpuZombie = createTextureGPUShape(bs.createTextureQuad(1,1), green_pipeline, "sprites/zombie.png", GL_STATIC_DRAW, True)
     gpuHuman = createTextureGPUShape(bs.createTextureQuad(1,1), green_pipeline, "sprites/estudiante5.png", GL_STATIC_DRAW, True)
-    gpuGameOver = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "sprites/game_over.png", GL_STATIC_DRAW, True)
-    gpuWin = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "sprites/win2.png", GL_STATIC_DRAW, True)
+    #gpuGameOver = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "sprites/game_over.png", GL_STATIC_DRAW, True)##
+    #gpuWin = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "sprites/win2.png", GL_STATIC_DRAW, True)##
 
     forest = createTextureScene(tex_pipeline) # arriba
 
@@ -321,10 +321,10 @@ if __name__ == "__main__":
     zombieNode.childs = [gpuZombie]
 
     gameoverNode = sg.SceneGraphNode("game over")
-    gameoverNode.childs = [gpuGameOver]
+    #gameoverNode.childs = [gpuGameOver]##
 
     winNode = sg.SceneGraphNode("win")
-    winNode.childs = [gpuWin]
+    #winNode.childs = [gpuWin]##
 
     gateNode = sg.findNode(forest, "gate")
 
@@ -396,6 +396,8 @@ if __name__ == "__main__":
         # Se llama al metodo del player para detectar colisiones
         #player.collision(enemies)
         if player.objective(store) and notGameOver:
+            gpuWin = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "sprites/win2.png", GL_STATIC_DRAW, True)##
+            winNode.childs= [gpuWin]##
             tex_scene.childs += [winNode]
             notGameOver = not notGameOver
             gameOver = True
@@ -406,7 +408,6 @@ if __name__ == "__main__":
             tex_scene.childs+= [gameoverNode]
             gameOver = not gameOver
 
-            
         winNode.transform = tr.matmul([tr.uniformScale(1 + 0.5*np.cos(-t1)), tr.rotationZ(-t1*0.5)])
 
         # Se llama al metodo del player para actualizar su posicion
@@ -418,8 +419,8 @@ if __name__ == "__main__":
 
         shearing = sg.findNode(tex_scene, "shearing")
         shearing.transform = tr.shearing(0, 0.1 * np.cos(t1), 0, 0, 0, 0)
-
-        # Se crean basuras cada 5 segundos
+        #######################################################################
+        # Se crean personajes cada T segundos
         if(gelta > var_t):
             next_npc = random.randint(0, 1)
             prob = random.uniform(0, 1)
@@ -456,7 +457,9 @@ if __name__ == "__main__":
                         carga.zombie = 1
                         carga.model.childs = [gpuZombie]
             g0 = t1
+        #####################################################################
 
+        # Movemos a los personajes, detectando colisiones e infecciones
         for character in enemies:
             if character.t < 1.1:
                 character.t += 0.0001
@@ -467,9 +470,11 @@ if __name__ == "__main__":
                 character.model.childs = [gpuZombie]
             if character.t > 1.1:
                 character.model.childs = []
-                #tex_scene_green.childs.remove(character.model)
 
+        # Verificamos si el jugador se convierte en zombie
         if player.zombie==1 and notGameOver:
+            gpuGameOver = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "sprites/game_over.png", GL_STATIC_DRAW, True)##
+            gameoverNode.childs = [gpuGameOver]##
             player.model.childs = [gpuZombie]
             tex_scene.childs+=[gameoverNode]
             winNode.clear()
@@ -485,6 +490,7 @@ if __name__ == "__main__":
         # Se usa el siguiente pipeline
         glUseProgram(green_pipeline.shaderProgram)
 
+        # Verificamos si los personajes estan infectados, enviando un mensaje al shader
         for character in enemies:
             if controller.glasses:
                 glUniform1f(glGetUniformLocation(green_pipeline.shaderProgram, "infectedd"), float(character.infected))
@@ -501,6 +507,7 @@ if __name__ == "__main__":
         # Se usa el siguiente pipeline
         glUseProgram(switchingPipeline.shaderProgram)
 
+        # Hacemos cambiar los colores de los power ups cada dos segundos enviando un mensaje al shader
         if selta>2:
             if switch:
                 glUniform1f(glGetUniformLocation(switchingPipeline.shaderProgram, "switchColor"), float(1))
@@ -512,7 +519,7 @@ if __name__ == "__main__":
         switchingPipeline.drawCall(gpuHealthPack, GL_LINES)
         switchingPipeline.drawCall(gpuPowerPack, GL_TRIANGLE_STRIP)
 
-        # sprint
+        # sprint del jugador
         if controller.sprint:
             player.vel = [0.7,0.7]
         else:
