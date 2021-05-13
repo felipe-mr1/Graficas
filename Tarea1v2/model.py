@@ -27,7 +27,7 @@ class Player():
         self.controller = new_controller
 
 
-    def update(self, delta):
+    def update(self, delta, direction):
         # Se actualiza la posicion del auto
         # Si detecta la tecla [D] presionada se mueve hacia la derecha
         if self.controller.is_d_pressed and self.pos[0] < 0.6 and self.zombie==0:
@@ -42,7 +42,7 @@ class Player():
         if self.controller.is_s_pressed and self.pos[1] > -0.85 and self.zombie==0:
             self.pos[1] -= self.vel[1] * delta
         # Se le aplica la transformacion de traslado segun la posicion actual
-        self.model.transform = tr.matmul([tr.translate(self.pos[0], self.pos[1], 0), tr.scale(self.size, self.size*2, 1)])
+        self.model.transform = tr.matmul([tr.translate(self.pos[0], self.pos[1], 0), tr.scale(direction * self.size, self.size*2, 1)])
 
     def collision(self, cargas):
         # Funcion para detectar las colisiones con las cargas

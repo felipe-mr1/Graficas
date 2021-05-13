@@ -80,11 +80,11 @@ def createTextureScene(tex_pipeline):
     gpuTree = createTextureGPUShape(bs.createTextureQuad(1, 1), tex_pipeline, "sprites/tree2.png", GL_STATIC_DRAW, True)
     gpuSidewalk = createTextureGPUShape(bs.createTextureQuad(1.0,3.0), tex_pipeline, "sprites/sidewalk.jpg",GL_STATIC_DRAW, True, GL_REPEAT)
     gpuTreeRepeat = createTextureGPUShape(bs.createTextureQuad(1, 4), tex_pipeline, "sprites/tree2.png",GL_STATIC_DRAW, True, GL_REPEAT)
-    gpuGate = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "sprites/gate4.png", GL_STATIC_DRAW, False)
+    gpuGate = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "sprites/gate4.png", GL_STATIC_DRAW, True)
     gpuStore = createTextureGPUShape(bs.createTextureQuad(1, 1), tex_pipeline, "sprites/tienda.png",GL_STATIC_DRAW, False)
 
     gateNode = sg.SceneGraphNode("gate")
-    gateNode.transform = tr.matmul([tr.translate(0.7, 0.0, 0.0),tr.uniformScale(0.25)])
+    gateNode.transform = tr.matmul([tr.translate(0.725, 0.0, 0.0),tr.uniformScale(0.25)])
     gateNode.childs = [gpuGate]
 
     storeNode = sg.SceneGraphNode("store")
@@ -194,8 +194,6 @@ def createScene(pipeline):
     line2Node = sg.SceneGraphNode("line2")
     line2Node.transform = tr.matmul([tr.translate(0, -0.5, 0),tr.scale(0.1, 0.5, 1)])
     line2Node.childs = [gpuWhiteQuad]
-
-    
 
     # Nodo de la calle completa
     streetNode = sg.SceneGraphNode("street")

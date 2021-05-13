@@ -1,4 +1,4 @@
-""" P3 [Drive simulator] """
+""" survival game """
 
 import glfw
 import OpenGL.GL.shaders
@@ -183,6 +183,7 @@ class Controller:
         self.is_d_pressed = False
         self.glasses = False
         self.sprint = False
+        self.direction = 1
 
 
 # we will use the global controller as communication with the callback function
@@ -211,6 +212,7 @@ def on_key(window, key, scancode, action, mods):
     if key == glfw.KEY_A:
         if action ==glfw.PRESS:
             controller.is_a_pressed = True
+            controller.direction = -1
         elif action == glfw.RELEASE:
             controller.is_a_pressed = False
 
@@ -218,6 +220,7 @@ def on_key(window, key, scancode, action, mods):
     if key == glfw.KEY_D:
         if action ==glfw.PRESS:
             controller.is_d_pressed = True
+            controller.direction = 1
         elif action == glfw.RELEASE:
             controller.is_d_pressed = False
 
@@ -403,6 +406,8 @@ if __name__ == "__main__":
             gameOver = True
 
         if player.zombie == 1 and gameOver:
+            gpuGameOver = createTextureGPUShape(bs.createTextureQuad(1,1), tex_pipeline, "sprites/game_over.png", GL_STATIC_DRAW, True)
+            gameoverNode.childs = [gpuGameOver]
             player.model.childs = [gpuZombie]
             winNode.childs = []
             tex_scene.childs+= [gameoverNode]
@@ -411,7 +416,7 @@ if __name__ == "__main__":
         winNode.transform = tr.matmul([tr.uniformScale(1 + 0.5*np.cos(-t1)), tr.rotationZ(-t1*0.5)])
 
         # Se llama al metodo del player para actualizar su posicion
-        player.update(delta)
+        player.update(delta, controller.direction)
    
         # Se dibuja el grafo de escena principal
         glUseProgram(pipeline.shaderProgram)
