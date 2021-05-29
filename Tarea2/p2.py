@@ -10,6 +10,9 @@ import grafica.lighting_shaders as ls
 import grafica.scene_graph as sg
 from shapes3d import *
 
+import imgui
+from imgui.integrations.glfw import GlfwRenderer
+
 class PolarCamera:
     def __init__(self):
         self.center = np.array([0.0, 0.0, -0.5])
@@ -107,6 +110,41 @@ class Controller:
         if self.is_down_pressed:
             self.polar_camera.set_rho(5 * delta)
 
+def transformGuiOverlay(lightPos, ka, kd, ks):
+
+    # start new frame context
+    imgui.new_frame()
+
+    # open new window context
+    imgui.begin("Material control", False, imgui.WINDOW_ALWAYS_AUTO_RESIZE)
+
+    # draw text label inside of current window
+    imgui.text("Configuration sliders")
+
+    edited, lightPos[0] = imgui.slider_float("light position X", lightPos[0], -2.3, 2.3)
+    edited, lightPos[1] = imgui.slider_float("light position Y", lightPos[1], -2.3, 2.3)
+    edited, lightPos[2] = imgui.slider_float("light position Z", lightPos[2], -2.3, 2.3)
+    
+    edited, ka = imgui.color_edit3("ka", ka[0], ka[1], ka[2])
+    if imgui.button("clean ka"):
+        ka = (1.0, 1.0, 1.0)
+    edited, kd = imgui.color_edit3("kd", kd[0], kd[1], kd[2])
+    if imgui.button("clean kd"):
+        kd = (1.0, 1.0, 1.0)
+    edited, ks = imgui.color_edit3("ks", ks[0], ks[1], ks[2])
+    if imgui.button("clean ks"):
+        ks = (1.0, 1.0, 1.0)
+
+    # close current window context
+    imgui.end()
+
+    # pass all drawing comands to the rendering pipeline
+    # and close frame context
+    imgui.render()
+    imgui.end_frame()
+
+    return lightPos, ka, kd, ks
+
 if __name__ == "__main__":
 
     # Initialize glfw
@@ -158,9 +196,19 @@ if __name__ == "__main__":
     # glfw will swap buffers as soon as possible
     glfw.swap_interval(0)
     t0 = glfw.get_time()
-    r = 0.5
-    g = 0
-    b = 0.25
+
+    # initilize imgui context (see documentation)
+    imgui.create_context()
+    impl = GlfwRenderer(window)
+
+    controller = Controller()
+    # Connecting the callback function 'on_key' to handle keyboard events
+    glfw.set_key_callback(window, controller.on_key)
+
+    lightPos = [0, 0, 2.3]
+    ka = [0.2, 0.2, 0.2] 
+    kd = [0.5, 0.5, 0.5]
+    ks = [1.0, 1.0, 1.0] 
 
     # Application loop
     while not glfw.window_should_close(window):
@@ -169,10 +217,8 @@ if __name__ == "__main__":
         delta = t1 -t0
         t0 = t1
 
-        # Measuring performance
-        perfMonitor.update(glfw.get_time())
-        glfw.set_window_title(window, title + str(perfMonitor))
-
+        
+        impl.process_inputs()
         # Using GLFW to check for input events
         glfw.poll_events()
 
@@ -185,6 +231,11 @@ if __name__ == "__main__":
 
         # Clearing the screen in both, color and depth
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+
+         # imgui function
+
+        lightPos, ka, kd, ks = \
+            transformGuiOverlay(lightPos, ka, kd, ks)
 
         # Filling or not the shapes depending on the controller state
         if (controller.fillPolygon):
@@ -201,7 +252,7 @@ if __name__ == "__main__":
             mvpPipeline.drawCall(gpuAxis, GL_LINES)
 
         lightingPipeline = phongPipeline
-        lightposition = [0*np.cos(t1), 0*np.sin(t1), 2.3]
+        #lightposition = [1*np.cos(t1), 1*np.sin(t1), 2.3]
 
         #r = np.abs(((0.5*t1+0.00) % 2)-1)
         #g = np.abs(((0.5*t1+0.33) % 2)-1)
@@ -211,19 +262,20 @@ if __name__ == "__main__":
         
         glUseProgram(lightingPipeline.shaderProgram)
         # White light in all components: ambient, diffuse and specular.
-        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "La"), 0.5, 0.5, 0.5)
+        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "La"), 0.25, 0.25, 0.25)
         glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Ld"), 0.5, 0.5, 0.5)
-        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Ls"), 0.5, 0.5, 0.5)
+        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Ls"), 1.0, 1.0, 1.0)
 
+        # Object is barely visible at only ambient. Diffuse behavior is slightly red. Sparkles are white
         glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Ka"), 0.2, 0.2, 0.2)
         glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Kd"), 0.5, 0.5, 0.5)
-        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Ks"), 0.5, 0.5, 0.5)
+        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Ks"), 1.0, 1.0, 1.0)
 
-        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "lightPosition"), lightposition[0], lightposition[1], lightposition[2])
+        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "lightPosition"), lightPos[0], lightPos[1], lightPos[2])
         glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "viewPosition"), camera.eye[0], camera.eye[1], camera.eye[2])
-        glUniform1ui(glGetUniformLocation(lightingPipeline.shaderProgram, "shininess"), 10)
+        glUniform1ui(glGetUniformLocation(lightingPipeline.shaderProgram, "shininess"), 100)
         
-        glUniform1f(glGetUniformLocation(lightingPipeline.shaderProgram, "constantAttenuation"), 0.01)
+        glUniform1f(glGetUniformLocation(lightingPipeline.shaderProgram, "constantAttenuation"), 0.001)
         glUniform1f(glGetUniformLocation(lightingPipeline.shaderProgram, "linearAttenuation"), 0.03)
         glUniform1f(glGetUniformLocation(lightingPipeline.shaderProgram, "quadraticAttenuation"), 0.01)
 
@@ -233,40 +285,48 @@ if __name__ == "__main__":
 
         # Drawing
         sg.drawSceneGraphNode(scene, lightingPipeline, "model")
+
+        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Ka"), ka[0], ka[1], ka[2])
+        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Kd"), kd[0], kd[1], kd[2])
+        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Ks"), ks[0], ks[1], ks[2])
+
         sg.drawSceneGraphNode(cube1, lightingPipeline, "model")
         sg.drawSceneGraphNode(cube2, lightingPipeline, "model")
         sg.drawSceneGraphNode(sphere, lightingPipeline, "model")
         
         glUseProgram(phongTexPipeline.shaderProgram)
         # White light in all components: ambient, diffuse and specular.
-        glUniform3f(glGetUniformLocation(phongTexPipeline.shaderProgram, "La"), 0.2, 0.2, 0.2)
+        glUniform3f(glGetUniformLocation(phongTexPipeline.shaderProgram, "La"), 0.25, 0.25, 0.25)
         glUniform3f(glGetUniformLocation(phongTexPipeline.shaderProgram, "Ld"), 0.5, 0.5, 0.5)
         glUniform3f(glGetUniformLocation(phongTexPipeline.shaderProgram, "Ls"), 1.0, 1.0, 1.0)
 
-        # Object is barely visible at only ambient. Diffuse behavior is slightly red. Sparkles are white
-        glUniform3f(glGetUniformLocation(phongTexPipeline.shaderProgram, "Ka"), 0.2, 0.2, 0.2)
-        glUniform3f(glGetUniformLocation(phongTexPipeline.shaderProgram, "Kd"), 0.5, 0.5, 0.5)
-        glUniform3f(glGetUniformLocation(phongTexPipeline.shaderProgram, "Ks"), 1.0, 1.0, 1.0)
-
-        glUniform3f(glGetUniformLocation(phongTexPipeline.shaderProgram, "lightPosition"), lightposition[0], lightposition[1], lightposition[2])
+        glUniform3f(glGetUniformLocation(phongTexPipeline.shaderProgram, "lightPosition"), lightPos[0], lightPos[1], lightPos[2])
         glUniform3f(glGetUniformLocation(phongTexPipeline.shaderProgram, "viewPosition"), camera.eye[0], camera.eye[1], camera.eye[2])
         glUniform1ui(glGetUniformLocation(phongTexPipeline.shaderProgram, "shininess"), 100)
-        
-        glUniform1f(glGetUniformLocation(phongTexPipeline.shaderProgram, "constantAttenuation"), 0.1)
+
+        glUniform1f(glGetUniformLocation(phongTexPipeline.shaderProgram, "constantAttenuation"), 0.001)
         glUniform1f(glGetUniformLocation(phongTexPipeline.shaderProgram, "linearAttenuation"), 0.03)
         glUniform1f(glGetUniformLocation(phongTexPipeline.shaderProgram, "quadraticAttenuation"), 0.01)
+        
+        glUniform3f(glGetUniformLocation(phongTexPipeline.shaderProgram, "Ka"), ka[0], ka[1], ka[2])
+        glUniform3f(glGetUniformLocation(phongTexPipeline.shaderProgram, "Kd"), kd[0], kd[1], kd[2])
+        glUniform3f(glGetUniformLocation(phongTexPipeline.shaderProgram, "Ks"), ks[0], ks[1], ks[2])
 
         glUniformMatrix4fv(glGetUniformLocation(phongTexPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
         glUniformMatrix4fv(glGetUniformLocation(phongTexPipeline.shaderProgram, "view"), 1, GL_TRUE, viewMatrix)
         glUniformMatrix4fv(glGetUniformLocation(phongTexPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
 
-        #sg.drawSceneGraphNode(tex_sphere, phongTexPipeline, "model")
+        sg.drawSceneGraphNode(tex_sphere, phongTexPipeline, "model")
         
-        
+        # Drawing the imgui texture over our drawing
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
+        impl.render(imgui.get_draw_data())
+
         # Once the drawing is rendered, buffers are swap so an uncomplete drawing is never seen.
         glfw.swap_buffers(window)
 
     gpuAxis.clear()
+    impl.shutdown()
     scene.clear()
     cube1.clear()
     cube2.clear()

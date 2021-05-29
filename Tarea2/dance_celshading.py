@@ -9,6 +9,7 @@ import grafica.performance_monitor as pm
 import grafica.lighting_shaders as ls
 import grafica.scene_graph as sg
 from shapes3d import *
+from grafica.gpu_shape import GPUShape
 
 import imgui
 from imgui.integrations.glfw import GlfwRenderer
@@ -146,6 +147,159 @@ def transformGuiOverlay(locationZ, la, ld, ls, cte_at, lnr_at, qud_at, shininess
 
     return locationZ, la, ld, ls, cte_at, lnr_at, qud_at, shininess
 
+
+class SimplePhongShaderProgram:
+
+    def __init__(self):
+        vertex_shader = """
+            #version 330 core
+
+            layout (location = 0) in vec3 position;
+            layout (location = 1) in vec3 color;
+            layout (location = 2) in vec3 normal;
+
+            out vec3 fragPosition;
+            out vec3 fragOriginalColor;
+            out vec3 fragNormal;
+
+            uniform mat4 model;
+            uniform mat4 view;
+            uniform mat4 projection;
+
+            void main()
+            {
+                fragPosition = vec3(model * vec4(position, 1.0));
+                fragOriginalColor = color;
+                fragNormal = mat3(transpose(inverse(model))) * normal;  
+                
+                gl_Position = projection * view * vec4(fragPosition, 1.0);
+            }
+            """
+
+        fragment_shader = """
+            #version 330 core
+
+            out vec4 fragColor;
+
+            in vec3 fragNormal;
+            in vec3 fragPosition;
+            in vec3 fragOriginalColor;
+            
+            uniform vec3 lightPosition; 
+            uniform vec3 viewPosition;
+            uniform vec3 La;
+            uniform vec3 Ld;
+            uniform vec3 Ls;
+            uniform vec3 Ka;
+            uniform vec3 Kd;
+            uniform vec3 Ks;
+            uniform uint shininess;
+            uniform float constantAttenuation;
+            uniform float linearAttenuation;
+            uniform float quadraticAttenuation;
+
+            void main()
+            {
+                // ambient
+                vec3 ambient = Ka * La;
+                
+                // diffuse
+                // fragment normal has been interpolated, so it does not necessarily have norm equal to 1
+                vec3 normalizedNormal = normalize(fragNormal);
+                vec3 toLight = lightPosition - fragPosition;
+                vec3 lightDir = normalize(toLight);
+                float diff = max(dot(normalizedNormal, lightDir), 0.0);
+                if (diff > 0.95){
+                    diff = 1.0f;
+                }
+                else if (diff > 0.75){
+                    diff = 0.8f;
+                }
+                else if (diff > 0.50){
+                    diff = 0.8f;
+                }
+                else if (diff > 0.25){
+                    diff = 0.3f;
+                }
+                else{
+                    diff = 0.3f;
+                }
+                vec3 diffuse = Kd * Ld * diff;
+                
+                
+                
+                // specular
+                vec3 viewDir = normalize(viewPosition - fragPosition);
+                vec3 reflectDir = reflect(-lightDir, normalizedNormal);  
+                float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
+                float intensity2 = max(dot(normalizedNormal, lightDir), 0.0);
+                vec3 specular = Ks * Ls * spec;
+                if (intensity2 > 0.95){
+                    vec3 specular = vec3(1.0,1.0,1.0);
+                }
+                else if (intensity2 > 0.75){
+                    vec3 specular = vec3(0.8, 0.8, 0.8);
+                }
+                else if (intensity2 > 0.50){
+                    vec3 specular = vec3(0.6, 0.6, 0.6);
+                }
+                else if (intensity2 > 0.25){
+                    vec3 specular = vec3(0.4, 0.4, 0.4);
+                }
+                else{
+                    vec3 specular = vec3(0.2, 0.2, 0.2);
+                }
+
+                // attenuation
+                float distToLight = length(toLight);
+                float attenuation = constantAttenuation
+                    + linearAttenuation * distToLight
+                    + quadraticAttenuation * distToLight * distToLight;
+                    
+                vec3 result = (ambient + ((diffuse + specular) / attenuation)) * fragOriginalColor;
+                fragColor = vec4(result, 1.0);
+            }
+            """
+
+        self.shaderProgram = OpenGL.GL.shaders.compileProgram(
+            OpenGL.GL.shaders.compileShader(vertex_shader, OpenGL.GL.GL_VERTEX_SHADER),
+            OpenGL.GL.shaders.compileShader(fragment_shader, OpenGL.GL.GL_FRAGMENT_SHADER))
+
+
+    def setupVAO(self, gpuShape):
+
+        glBindVertexArray(gpuShape.vao)
+
+        glBindBuffer(GL_ARRAY_BUFFER, gpuShape.vbo)
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gpuShape.ebo)
+
+        # 3d vertices + rgb color + 3d normals => 3*4 + 3*4 + 3*4 = 36 bytes
+        position = glGetAttribLocation(self.shaderProgram, "position")
+        glVertexAttribPointer(position, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(0))
+        glEnableVertexAttribArray(position)
+        
+        color = glGetAttribLocation(self.shaderProgram, "color")
+        glVertexAttribPointer(color, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(12))
+        glEnableVertexAttribArray(color)
+
+        normal = glGetAttribLocation(self.shaderProgram, "normal")
+        glVertexAttribPointer(normal, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(24))
+        glEnableVertexAttribArray(normal)
+
+        # Unbinding current vao
+        glBindVertexArray(0)
+
+
+    def drawCall(self, gpuShape, mode=GL_TRIANGLES):
+        assert isinstance(gpuShape, GPUShape)
+
+        # Binding the VAO and executing the draw call
+        glBindVertexArray(gpuShape.vao)
+        glDrawElements(mode, gpuShape.size, GL_UNSIGNED_INT, None)
+
+        # Unbind the current VAO
+        glBindVertexArray(0)
+
 if __name__ == "__main__":
 
     # Initialize glfw
@@ -169,8 +323,10 @@ if __name__ == "__main__":
     glfw.set_key_callback(window, controller.on_key)
 
      # Different shader programs for different lighting strategies
-    phongPipeline = ls.SimplePhongShaderProgram()
-    phongPipeline2 = ls.SimplePhongShaderProgram()
+    phongPipeline = SimplePhongShaderProgram()
+    phongPipeline2 = SimplePhongShaderProgram()
+    phongPipeline3 = SimplePhongShaderProgram()
+    phongPipeline4 = SimplePhongShaderProgram()
     phongTexPipeline = ls.SimpleTexturePhongShaderProgram()
 
     # This shader program does not consider lighting
@@ -196,6 +352,7 @@ if __name__ == "__main__":
     torus = createTorusNode(phongPipeline)
     torus2 = createTexTorusNode(phongTexPipeline, -0.1)
     torus3 = createTorusNode(phongPipeline2, 0.1)
+    head = createBodyScene(phongPipeline)
 
     perfMonitor = pm.PerformanceMonitor(glfw.get_time(), 0.5)
     # glfw will swap buffers as soon as possible
@@ -211,7 +368,7 @@ if __name__ == "__main__":
     # Connecting the callback function 'on_key' to handle keyboard events
     glfw.set_key_callback(window, controller.on_key)
 
-    locationZ = 2.3 
+    locationZ = 2.3
     la = [1.0, 1.0, 1.0] 
     ld = [1.0, 1.0, 1.0] 
     ls = [1.0, 1.0, 1.0]
@@ -224,12 +381,16 @@ if __name__ == "__main__":
     aux_b = 0.5
 
     var = 0
+
+    headRotation = sg.findNode(head, "headRotation")
+    centerBodyRot = sg.findNode(head, "centerBodyRotation")
    
 
     # Application loop
     while not glfw.window_should_close(window):
         # Variables del tiempo
         t1 = glfw.get_time()
+        theta = np.sin(3.0 * glfw.get_time())
         delta = t1 -t0
         selta = t1-s
         t0 = t1
@@ -272,8 +433,6 @@ if __name__ == "__main__":
         lightingPipeline2 = phongPipeline2
         #lightposition = [1*np.cos(t1), 1*np.sin(t1), 2.3]
         lightposition = [0, 0, locationZ]
-        lightposition2 = [1, 0, locationZ]
-        lightposition3 = [-1, 0, locationZ]
 
         #r = np.abs(((0.5*t1+0.00) % 2)-1)
         #g = np.abs(((0.5*t1+0.33) % 2)-1)
@@ -305,6 +464,10 @@ if __name__ == "__main__":
             #aux_g = (aux_g + 0.333)%1
             #aux_b = (aux_b + 0.333)%1
             s=t1
+
+        #torus.transform = tr.matmul([tr.rotationX(t1), tr.scale(5, 5, 5)])
+        headRotation.transform = tr.matmul([tr.rotationZ(theta), tr.rotationY(theta), tr.translate(0,0,0.1)])
+        centerBodyRot.transform = tr.matmul([tr.rotationZ(theta*0.2), tr.rotationY(theta*0.2), tr.translate(0,0,0.1)])
         glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "La"), aux_r, aux_g, aux_b)
         glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Ld"), aux_r, aux_g, aux_b)
         glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Ls"), aux_r, aux_g, aux_b)
@@ -331,7 +494,8 @@ if __name__ == "__main__":
         #sg.drawSceneGraphNode(cube1, lightingPipeline, "model")
         #sg.drawSceneGraphNode(cube2, lightingPipeline, "model")
         #sg.drawSceneGraphNode(sphere, lightingPipeline, "model")
-        sg.drawSceneGraphNode(torus, lightingPipeline, "model")
+        #sg.drawSceneGraphNode(torus, lightingPipeline, "model")
+        sg.drawSceneGraphNode(head, lightingPipeline, "model")
         #sg.drawSceneGraphNode(torus2, lightingPipeline, "model")
         
         
@@ -358,7 +522,7 @@ if __name__ == "__main__":
         glUniformMatrix4fv(glGetUniformLocation(phongTexPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
 
         #sg.drawSceneGraphNode(tex_sphere, phongTexPipeline, "model")
-        sg.drawSceneGraphNode(torus2, phongTexPipeline, "model")
+        #sg.drawSceneGraphNode(torus2, phongTexPipeline, "model")
 
         glUseProgram(lightingPipeline2.shaderProgram)
         # White light in all components: ambient, diffuse and specular.
@@ -383,7 +547,7 @@ if __name__ == "__main__":
         glUniformMatrix4fv(glGetUniformLocation(lightingPipeline2.shaderProgram, "view"), 1, GL_TRUE, viewMatrix)
         glUniformMatrix4fv(glGetUniformLocation(lightingPipeline2.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
 
-        sg.drawSceneGraphNode(torus3, lightingPipeline2, "model")
+        #sg.drawSceneGraphNode(torus3, lightingPipeline2, "model")
         
         # Drawing the imgui texture over our drawing
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)

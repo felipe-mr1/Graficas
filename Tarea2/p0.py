@@ -235,7 +235,7 @@ if __name__ == "__main__":
         sg.drawSceneGraphNode(scene, lightingPipeline, "model")
         sg.drawSceneGraphNode(cube1, lightingPipeline, "model")
         sg.drawSceneGraphNode(cube2, lightingPipeline, "model")
-        sg.drawSceneGraphNode(sphere, lightingPipeline, "model")
+        #sg.drawSceneGraphNode(sphere, lightingPipeline, "model")
         
         glUseProgram(phongTexPipeline.shaderProgram)
         # White light in all components: ambient, diffuse and specular.
