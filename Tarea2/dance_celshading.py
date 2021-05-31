@@ -10,9 +10,87 @@ import grafica.lighting_shaders as ls
 import grafica.scene_graph as sg
 from shapes3d import *
 from grafica.gpu_shape import GPUShape
+import openmesh as om
+from time import sleep
+import shader as sh
 
 import imgui
 from imgui.integrations.glfw import GlfwRenderer
+
+LIGHT_CEL_SHADING = 0
+LIGHT_PHONG   = 1
+
+def readFaceVertex(faceDescription):
+
+    aux = faceDescription.split('/')
+
+    assert len(aux[0]), "Vertex index has not been defined."
+
+    faceVertex = [int(aux[0]), None, None]
+
+    assert len(aux) == 3, "Only faces where its vertices require 3 indices are defined."
+
+    if len(aux[1]) != 0:
+        faceVertex[1] = int(aux[1])
+
+    if len(aux[2]) != 0:
+        faceVertex[2] = int(aux[2])
+
+    return faceVertex
+
+
+
+def readOBJ(filename, color):
+
+    vertices = []
+    normals = []
+    textCoords= []
+    faces = []
+
+    with open(filename, 'r') as file:
+        for line in file.readlines():
+            aux = line.strip().split()
+            
+            if aux[0] == 'v':
+                vertices += [[float(coord) for coord in aux[1:]]]
+
+            elif aux[0] == 'vn':
+                normals += [[float(coord) for coord in aux[1:]]]
+
+            elif aux[0] == 'vt':
+                #assert len(aux[1:]) == 2, "Texture coordinates with different than 2 dimensions are not supported"
+                textCoords += [[float(coord) for coord in aux[1:3]]]
+
+            elif aux[0] == 'f':
+                N = len(aux)                
+                faces += [[readFaceVertex(faceVertex) for faceVertex in aux[1:4]]]
+                for i in range(3, N-1):
+                    faces += [[readFaceVertex(faceVertex) for faceVertex in [aux[i], aux[i+1], aux[1]]]]
+
+        vertexData = []
+        indices = []
+        index = 0
+
+        # Per previous construction, each face is a triangle
+        for face in faces:
+
+            # Checking each of the triangle vertices
+            for i in range(0,3):
+                vertex = vertices[face[i][0]-1]
+                #tex = vertices[face[i][1]-0]
+                normal = normals[face[i][2]-1]
+
+                vertexData += [
+                    vertex[0], vertex[1], vertex[2],
+                    color[0], color[1], color[2], # reemplazar por texturas tex[0],tex[1]
+                    normal[0], normal[1], normal[2]
+                ]
+
+            # Connecting the 3 vertices to create a triangle
+            indices += [index, index + 1, index + 2]
+            index += 3        
+
+        return bs.Shape(vertexData, indices)
 
 class PolarCamera:
     def __init__(self):
@@ -55,6 +133,10 @@ class Controller:
 
         self.polar_camera = PolarCamera()
 
+        self.lightingModel = LIGHT_CEL_SHADING
+
+        self.slowMotion = False
+
     def get_camera(self):
         return self.polar_camera
 
@@ -91,6 +173,18 @@ class Controller:
         if key == glfw.KEY_ESCAPE:
             if action == glfw.PRESS:
                 glfw.set_window_should_close(window, True)
+
+        if key == glfw.KEY_TAB:
+            if action == glfw.PRESS:
+                self.lightingModel = LIGHT_PHONG
+            elif action == glfw.RELEASE:
+                self.lightingModel = LIGHT_CEL_SHADING
+
+        if key == glfw.KEY_1:
+            if action == glfw.PRESS:
+                self.slowMotion = True
+            elif action == glfw.RELEASE:
+                self.slowMotion = False
 
         elif key == glfw.KEY_LEFT_CONTROL:
             if action == glfw.PRESS:
@@ -148,158 +242,6 @@ def transformGuiOverlay(locationZ, la, ld, ls, cte_at, lnr_at, qud_at, shininess
     return locationZ, la, ld, ls, cte_at, lnr_at, qud_at, shininess
 
 
-class SimplePhongShaderProgram:
-
-    def __init__(self):
-        vertex_shader = """
-            #version 330 core
-
-            layout (location = 0) in vec3 position;
-            layout (location = 1) in vec3 color;
-            layout (location = 2) in vec3 normal;
-
-            out vec3 fragPosition;
-            out vec3 fragOriginalColor;
-            out vec3 fragNormal;
-
-            uniform mat4 model;
-            uniform mat4 view;
-            uniform mat4 projection;
-
-            void main()
-            {
-                fragPosition = vec3(model * vec4(position, 1.0));
-                fragOriginalColor = color;
-                fragNormal = mat3(transpose(inverse(model))) * normal;  
-                
-                gl_Position = projection * view * vec4(fragPosition, 1.0);
-            }
-            """
-
-        fragment_shader = """
-            #version 330 core
-
-            out vec4 fragColor;
-
-            in vec3 fragNormal;
-            in vec3 fragPosition;
-            in vec3 fragOriginalColor;
-            
-            uniform vec3 lightPosition; 
-            uniform vec3 viewPosition;
-            uniform vec3 La;
-            uniform vec3 Ld;
-            uniform vec3 Ls;
-            uniform vec3 Ka;
-            uniform vec3 Kd;
-            uniform vec3 Ks;
-            uniform uint shininess;
-            uniform float constantAttenuation;
-            uniform float linearAttenuation;
-            uniform float quadraticAttenuation;
-
-            void main()
-            {
-                // ambient
-                vec3 ambient = Ka * La;
-                
-                // diffuse
-                // fragment normal has been interpolated, so it does not necessarily have norm equal to 1
-                vec3 normalizedNormal = normalize(fragNormal);
-                vec3 toLight = lightPosition - fragPosition;
-                vec3 lightDir = normalize(toLight);
-                float diff = max(dot(normalizedNormal, lightDir), 0.0);
-                if (diff > 0.95){
-                    diff = 1.0f;
-                }
-                else if (diff > 0.75){
-                    diff = 0.8f;
-                }
-                else if (diff > 0.50){
-                    diff = 0.8f;
-                }
-                else if (diff > 0.25){
-                    diff = 0.3f;
-                }
-                else{
-                    diff = 0.3f;
-                }
-                vec3 diffuse = Kd * Ld * diff;
-                
-                
-                
-                // specular
-                vec3 viewDir = normalize(viewPosition - fragPosition);
-                vec3 reflectDir = reflect(-lightDir, normalizedNormal);  
-                float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
-                float intensity2 = max(dot(normalizedNormal, lightDir), 0.0);
-                vec3 specular = Ks * Ls * spec;
-                if (intensity2 > 0.95){
-                    vec3 specular = vec3(1.0,1.0,1.0);
-                }
-                else if (intensity2 > 0.75){
-                    vec3 specular = vec3(0.8, 0.8, 0.8);
-                }
-                else if (intensity2 > 0.50){
-                    vec3 specular = vec3(0.6, 0.6, 0.6);
-                }
-                else if (intensity2 > 0.25){
-                    vec3 specular = vec3(0.4, 0.4, 0.4);
-                }
-                else{
-                    vec3 specular = vec3(0.2, 0.2, 0.2);
-                }
-
-                // attenuation
-                float distToLight = length(toLight);
-                float attenuation = constantAttenuation
-                    + linearAttenuation * distToLight
-                    + quadraticAttenuation * distToLight * distToLight;
-                    
-                vec3 result = (ambient + ((diffuse + specular) / attenuation)) * fragOriginalColor;
-                fragColor = vec4(result, 1.0);
-            }
-            """
-
-        self.shaderProgram = OpenGL.GL.shaders.compileProgram(
-            OpenGL.GL.shaders.compileShader(vertex_shader, OpenGL.GL.GL_VERTEX_SHADER),
-            OpenGL.GL.shaders.compileShader(fragment_shader, OpenGL.GL.GL_FRAGMENT_SHADER))
-
-
-    def setupVAO(self, gpuShape):
-
-        glBindVertexArray(gpuShape.vao)
-
-        glBindBuffer(GL_ARRAY_BUFFER, gpuShape.vbo)
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gpuShape.ebo)
-
-        # 3d vertices + rgb color + 3d normals => 3*4 + 3*4 + 3*4 = 36 bytes
-        position = glGetAttribLocation(self.shaderProgram, "position")
-        glVertexAttribPointer(position, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(0))
-        glEnableVertexAttribArray(position)
-        
-        color = glGetAttribLocation(self.shaderProgram, "color")
-        glVertexAttribPointer(color, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(12))
-        glEnableVertexAttribArray(color)
-
-        normal = glGetAttribLocation(self.shaderProgram, "normal")
-        glVertexAttribPointer(normal, 3, GL_FLOAT, GL_FALSE, 36, ctypes.c_void_p(24))
-        glEnableVertexAttribArray(normal)
-
-        # Unbinding current vao
-        glBindVertexArray(0)
-
-
-    def drawCall(self, gpuShape, mode=GL_TRIANGLES):
-        assert isinstance(gpuShape, GPUShape)
-
-        # Binding the VAO and executing the draw call
-        glBindVertexArray(gpuShape.vao)
-        glDrawElements(mode, gpuShape.size, GL_UNSIGNED_INT, None)
-
-        # Unbind the current VAO
-        glBindVertexArray(0)
-
 if __name__ == "__main__":
 
     # Initialize glfw
@@ -323,11 +265,13 @@ if __name__ == "__main__":
     glfw.set_key_callback(window, controller.on_key)
 
      # Different shader programs for different lighting strategies
-    phongPipeline = SimplePhongShaderProgram()
-    phongPipeline2 = SimplePhongShaderProgram()
-    phongPipeline3 = SimplePhongShaderProgram()
-    phongPipeline4 = SimplePhongShaderProgram()
+    pipeline1 = es.SimpleModelViewProjectionShaderProgram()
+    phongPipeline = sh.CelShadingPhongShaderProgram()
+    phongPipeline2 = ls.SimplePhongShaderProgram()
+    phongPipeline3 = ls.SimplePhongShaderProgram()
+    phongPipeline4 = sh.CelShadingPhongShaderProgram()
     phongTexPipeline = ls.SimpleTexturePhongShaderProgram()
+    CSphongTexPipeline = sh.CelShadingTexturePhongShaderProgram()
 
     # This shader program does not consider lighting
     mvpPipeline = es.SimpleModelViewProjectionShaderProgram()
@@ -353,6 +297,30 @@ if __name__ == "__main__":
     torus2 = createTexTorusNode(phongTexPipeline, -0.1)
     torus3 = createTorusNode(phongPipeline2, 0.1)
     head = createBodyScene(phongPipeline)
+
+    shapeBaby = readOBJ('sprites/dababy.obj', (0.9, 0.6, 0.2))
+    gpuBaby = createGPUShape(phongPipeline, shapeBaby)
+
+    dababy = sg.SceneGraphNode("baby")
+    dababy.transform = tr.matmul([tr.translate(0,0,-1.9),tr.rotationZ(np.pi),tr.uniformScale(0.05)])
+    dababy.childs = [gpuBaby]
+
+    sphereMesh = createSphereMesh(64,0,0,0)
+    sphereMesh_vertices, sphereMesh_indices = get_vertexs_and_indexes(sphereMesh)
+
+    gpuSphere = es.GPUShape().initBuffers()
+    pipeline1.setupVAO(gpuSphere)
+    gpuSphere.fillBuffers(sphereMesh_vertices, sphereMesh_indices, GL_STATIC_DRAW)
+
+    toraxShape = createTorax()
+    gpuTorax = es.GPUShape().initBuffers()
+    phongTexPipeline.setupVAO(gpuTorax)
+    gpuTorax.texture = es.textureSimpleSetup("sprites/stone.png", GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
+    gpuTorax.fillBuffers(toraxShape.vertices, toraxShape.indices, GL_STATIC_DRAW)
+
+    toraxNode = sg.SceneGraphNode("torax")
+    toraxNode.transform = tr.matmul([tr.translate(0.0, 1.0, -0.9),tr.rotationZ(np.pi/2)])
+    toraxNode.childs = [gpuTorax]
 
     perfMonitor = pm.PerformanceMonitor(glfw.get_time(), 0.5)
     # glfw will swap buffers as soon as possible
@@ -384,7 +352,6 @@ if __name__ == "__main__":
 
     headRotation = sg.findNode(head, "headRotation")
     centerBodyRot = sg.findNode(head, "centerBodyRotation")
-   
 
     # Application loop
     while not glfw.window_should_close(window):
@@ -421,6 +388,9 @@ if __name__ == "__main__":
         else:
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 
+        if (controller.slowMotion):
+            sleep(0.3)
+
         # The axis is drawn without lighting effects
         if controller.showAxis:
             glUseProgram(mvpPipeline.shaderProgram)
@@ -431,8 +401,16 @@ if __name__ == "__main__":
 
         lightingPipeline = phongPipeline
         lightingPipeline2 = phongPipeline2
+        texPipeline = CSphongTexPipeline
         #lightposition = [1*np.cos(t1), 1*np.sin(t1), 2.3]
         lightposition = [0, 0, locationZ]
+
+        if controller.lightingModel == LIGHT_CEL_SHADING:
+            lightingPipeline = phongPipeline
+            texPipeline = CSphongTexPipeline
+        elif controller.lightingModel == LIGHT_PHONG:
+            lightingPipeline = phongPipeline3
+            texPipeline = phongTexPipeline
 
         #r = np.abs(((0.5*t1+0.00) % 2)-1)
         #g = np.abs(((0.5*t1+0.33) % 2)-1)
@@ -497,32 +475,34 @@ if __name__ == "__main__":
         #sg.drawSceneGraphNode(torus, lightingPipeline, "model")
         sg.drawSceneGraphNode(head, lightingPipeline, "model")
         #sg.drawSceneGraphNode(torus2, lightingPipeline, "model")
+        sg.drawSceneGraphNode(dababy, lightingPipeline, "model")
         
         
-        glUseProgram(phongTexPipeline.shaderProgram)
+        glUseProgram(texPipeline.shaderProgram)
         # White light in all components: ambient, diffuse and specular.
-        glUniform3f(glGetUniformLocation(phongTexPipeline.shaderProgram, "La"), aux_r, aux_g, aux_b)
-        glUniform3f(glGetUniformLocation(phongTexPipeline.shaderProgram, "Ld"), aux_r, aux_g, aux_b)
-        glUniform3f(glGetUniformLocation(phongTexPipeline.shaderProgram, "Ls"), aux_r, aux_g, aux_b)
+        glUniform3f(glGetUniformLocation(texPipeline.shaderProgram, "La"), aux_r, aux_g, aux_b)
+        glUniform3f(glGetUniformLocation(texPipeline.shaderProgram, "Ld"), aux_r, aux_g, aux_b)
+        glUniform3f(glGetUniformLocation(texPipeline.shaderProgram, "Ls"), aux_r, aux_g, aux_b)
 
-        glUniform3f(glGetUniformLocation(phongTexPipeline.shaderProgram, "lightPosition"), lightposition[0], lightposition[1], lightposition[2])
-        glUniform3f(glGetUniformLocation(phongTexPipeline.shaderProgram, "viewPosition"), camera.eye[0], camera.eye[1], camera.eye[2])
-        glUniform1ui(glGetUniformLocation(phongTexPipeline.shaderProgram, "shininess"), int(shininess))
+        glUniform3f(glGetUniformLocation(texPipeline.shaderProgram, "lightPosition"), lightposition[0], lightposition[1], lightposition[2])
+        glUniform3f(glGetUniformLocation(texPipeline.shaderProgram, "viewPosition"), camera.eye[0], camera.eye[1], camera.eye[2])
+        glUniform1ui(glGetUniformLocation(texPipeline.shaderProgram, "shininess"), int(shininess))
 
-        glUniform1f(glGetUniformLocation(phongTexPipeline.shaderProgram, "constantAttenuation"), cte_at)
-        glUniform1f(glGetUniformLocation(phongTexPipeline.shaderProgram, "linearAttenuation"), lnr_at)
-        glUniform1f(glGetUniformLocation(phongTexPipeline.shaderProgram, "quadraticAttenuation"), qud_at)
+        glUniform1f(glGetUniformLocation(texPipeline.shaderProgram, "constantAttenuation"), cte_at)
+        glUniform1f(glGetUniformLocation(texPipeline.shaderProgram, "linearAttenuation"), lnr_at)
+        glUniform1f(glGetUniformLocation(texPipeline.shaderProgram, "quadraticAttenuation"), qud_at)
         
-        glUniform3f(glGetUniformLocation(phongTexPipeline.shaderProgram, "Ka"), 0.2, 0.2, 0.2)
-        glUniform3f(glGetUniformLocation(phongTexPipeline.shaderProgram, "Kd"), 0.5, 0.5, 0.5)
-        glUniform3f(glGetUniformLocation(phongTexPipeline.shaderProgram, "Ks"), 1.0, 1.0, 1.0)
+        glUniform3f(glGetUniformLocation(texPipeline.shaderProgram, "Ka"), 0.2, 0.2, 0.2)
+        glUniform3f(glGetUniformLocation(texPipeline.shaderProgram, "Kd"), 0.5, 0.5, 0.5)
+        glUniform3f(glGetUniformLocation(texPipeline.shaderProgram, "Ks"), 1.0, 1.0, 1.0)
 
-        glUniformMatrix4fv(glGetUniformLocation(phongTexPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
-        glUniformMatrix4fv(glGetUniformLocation(phongTexPipeline.shaderProgram, "view"), 1, GL_TRUE, viewMatrix)
-        glUniformMatrix4fv(glGetUniformLocation(phongTexPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
+        glUniformMatrix4fv(glGetUniformLocation(texPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
+        glUniformMatrix4fv(glGetUniformLocation(texPipeline.shaderProgram, "view"), 1, GL_TRUE, viewMatrix)
+        glUniformMatrix4fv(glGetUniformLocation(texPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
 
         #sg.drawSceneGraphNode(tex_sphere, phongTexPipeline, "model")
         #sg.drawSceneGraphNode(torus2, phongTexPipeline, "model")
+        sg.drawSceneGraphNode(toraxNode, texPipeline, "model")
 
         glUseProgram(lightingPipeline2.shaderProgram)
         # White light in all components: ambient, diffuse and specular.
@@ -548,6 +528,13 @@ if __name__ == "__main__":
         glUniformMatrix4fv(glGetUniformLocation(lightingPipeline2.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
 
         #sg.drawSceneGraphNode(torus3, lightingPipeline2, "model")
+
+        glUseProgram(pipeline1.shaderProgram)
+        glUniformMatrix4fv(glGetUniformLocation(pipeline1.shaderProgram, "projection"), 1, GL_TRUE, projection)
+        glUniformMatrix4fv(glGetUniformLocation(pipeline1.shaderProgram, "view"), 1, GL_TRUE, viewMatrix)
+        glUniformMatrix4fv(glGetUniformLocation(pipeline1.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
+        pipeline1.drawCall(gpuSphere)
+
         
         # Drawing the imgui texture over our drawing
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)

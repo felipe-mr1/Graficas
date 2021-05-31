@@ -8,6 +8,8 @@ import grafica.basic_shapes as bs
 import grafica.easy_shaders as es
 import grafica.transformations as tr
 import grafica.scene_graph as sg
+import openmesh as om
+import random
 
 # Convenience function to ease initialization
 def createGPUShape(pipeline, shape):
@@ -140,6 +142,50 @@ def createCube2(pipeline):
 
     return scaledObject
 
+def createTorax():
+    vertices = [
+        0.2, -0.3, 0.4, 1, 1, 1, -1, 1, # 0 y las normales
+        0.2, 0.3, 0.4, 1, 1, 1, 1, 1, # 1
+        -0.2, 0.3, 0.4, 1, 1, -1, 1, 1, # 2
+        -0.2, -0.3, 0.4, 1, 1, -1, -1, 1, # 3
+        0.25, 0.0, 0.4, 1, 1, 1, 1, 1, # 4
+
+        0.15, -0.2, 0.0, 1, 1, 1, -1, 0, # 5
+        0.15, 0.2, 0.0, 1, 1, 1, 1, 0, # 6
+        -0.15, 0.2, 0.0, 1, 1, -1, 1, 0, # 7
+        -0.15, -0.2, 0.0, 1, 1, -1, -1, 0, # 8
+
+        0.1, -0.15, -0.4, 1, 1, 1, -1, -1, # 9
+        0.1, 0.15, -0.4, 1, 1, 1, 1, -1, # 10
+        -0.1, 0.15, -0.4, 1, 1, -1, 1, -1, # 11
+        -0.1, -0.15, -0.4, 1, 1, -1, -1, -1 # 12
+    ]
+    indices = [
+        0,1,2,
+        2,3,0,
+        0,1,4,
+        0,5,4,
+        4,6,1,
+        4,5,6,
+        1,6,7,
+        7,2,1,
+        2,7,8,
+        8,3,2,
+        3,8,5,
+        5,0,3,
+        5,9,10,
+        10,6,5,
+        6,10,11,
+        11,7,6,
+        7,11,12,
+        12,8,7,
+        8,12,9,
+        9,5,8,
+        9,10,11,
+        11,12,9
+    ]
+    return bs.Shape(vertices, indices)
+
 def createColorNormalSphere(N, r, g, b):
 
     vertices = []
@@ -190,6 +236,96 @@ def createColorNormalSphere(N, r, g, b):
                 indices += [ c + 2, c + 3, c + 0 ]
                 c += 4
     return bs.Shape(vertices, indices)
+
+def createSphereMesh(N,r,g,b):
+    vertices = []
+    indices = []
+    dTheta = 2 * np.pi /N
+    dPhi = 2 * np.pi /N
+    r = 0.5
+    c = 0
+
+    sphereMesh = om.TriMesh()
+
+    for i in range(N - 1):
+        theta = i * dTheta
+        theta1 = (i + 1) * dTheta
+        for j in range(N):
+            phi = j*dPhi
+            phi1 = (j+1)*dPhi
+            v0 = [r*np.sin(theta)*np.cos(phi), r*np.sin(theta)*np.sin(phi), r*np.cos(theta)]
+            v1 = [r*np.sin(theta1)*np.cos(phi), r*np.sin(theta1)*np.sin(phi), r*np.cos(theta1)]
+            v2 = [r*np.sin(theta1)*np.cos(phi1), r*np.sin(theta1)*np.sin(phi1), r*np.cos(theta1)]
+            v3 = [r*np.sin(theta)*np.cos(phi1), r*np.sin(theta)*np.sin(phi1), r*np.cos(theta)]
+            n0 = [np.sin(theta)*np.cos(phi), np.sin(theta)*np.sin(phi), np.cos(theta)]
+            n1 = [np.sin(theta1)*np.cos(phi), np.sin(theta1)*np.sin(phi), np.cos(theta1)]
+            n2 = [np.sin(theta1)*np.cos(phi1), np.sin(theta1)*np.sin(phi1), np.cos(theta1)]
+            n3 = [np.sin(theta)*np.cos(phi1), np.sin(theta)*np.sin(phi1), np.cos(theta)]
+
+
+            # Creamos los quad superiores
+            if i == 0:
+                vertices += [v0[0], v0[1], v0[2], r, g, b, n0[0], n0[1], n0[2]]
+                vertices += [v1[0], v1[1], v1[2], r, g, b, n1[0], n1[1], n1[2]]
+                vertices += [v2[0], v2[1], v2[2], r, g, b, n2[0], n2[1], n2[2]]
+                indices += [ c + 0, c + 1, c +2 ]
+                c += 3
+                vh0 = sphereMesh.add_vertex([v0[0], v0[1], v0[2]])
+                vh1 = sphereMesh.add_vertex([v1[0], v1[1], v1[2]])
+                vh2 = sphereMesh.add_vertex([v2[0], v2[1], v2[2]])
+                sphereMesh.add_face(vh0, vh1, vh2)
+            # Creamos los quads inferiores
+            elif i == (N-2):
+                vertices += [v0[0], v0[1], v0[2], r, g, b, n0[0], n0[1], n0[2]]
+                vertices += [v1[0], v1[1], v1[2], r, g, b, n1[0], n1[1], n1[2]]
+                vertices += [v3[0], v3[1], v3[2], r, g, b, n3[0], n3[1], n3[2]]
+                indices += [ c + 0, c + 1, c +2 ]
+                c += 3
+                vh0 = sphereMesh.add_vertex([v0[0], v0[1], v0[2]])
+                vh1 = sphereMesh.add_vertex([v1[0], v1[1], v1[2]])
+                vh2 = sphereMesh.add_vertex([v2[0], v2[1], v2[2]])
+                sphereMesh.add_face(vh0, vh1, vh2)
+            
+            # Creamos los quads intermedios
+            else: 
+                vertices += [v0[0], v0[1], v0[2], r, g, b, n0[0], n0[1], n0[2]]
+                vertices += [v1[0], v1[1], v1[2], r, g, b, n1[0], n1[1], n1[2]]
+                vertices += [v2[0], v2[1], v2[2], r, g, b, n2[0], n2[1], n2[2]]
+                vertices += [v3[0], v3[1], v3[2], r, g, b, n3[0], n3[1], n3[2]]
+                indices += [ c + 0, c + 1, c +2 ]
+                indices += [ c + 2, c + 3, c + 0 ]
+                c += 4
+                vh0 = sphereMesh.add_vertex([v0[0], v0[1], v0[2]])
+                vh1 = sphereMesh.add_vertex([v1[0], v1[1], v1[2]])
+                vh2 = sphereMesh.add_vertex([v2[0], v2[1], v2[2]])
+                vh3 = sphereMesh.add_vertex([v3[0], v3[1], v3[2]])
+                sphereMesh.add_face(vh0, vh1, vh2)
+                sphereMesh.add_face(vh2, vh3, vh0)
+    return sphereMesh
+
+def get_vertexs_and_indexes(mesh):
+    # Obtenemos las caras de la malla
+    faces = mesh.faces()
+
+    # Creamos una lista para los vertices e indices
+    vertexs = []
+
+    # Obtenemos los vertices y los recorremos
+    for vertex in mesh.points():
+        vertexs += vertex.tolist()
+        # Agregamos un color al azar
+        vertexs += [0, 0, 0]
+
+    indexes = []
+
+    for face in faces:
+        # Obtenemos los vertices de la cara
+        face_indexes = mesh.fv(face)
+        for vertex in face_indexes:
+            # Obtenemos el numero de indice y lo agregamos a la lista
+            indexes += [vertex.idx()]
+
+    return vertexs, indexes
 
 def createTextureNormalSphere(N):
     vertices = []
@@ -308,7 +444,25 @@ def createTextureTorus(N):
     return bs.Shape(vertices, indices)
 
 
+def createSphMshNode(pipeline):
+    sphereMesh = createSphereMesh(64,0,0,0)
+    sphereMesh_vertices, sphereMesh_indices = get_vertexs_and_indexes(sphereMesh)
 
+    gpuSphere = es.GPUShape().initBuffers()
+    pipeline.setupVAO(gpuSphere)
+    gpuSphere.fillBuffers(sphereMesh_vertices, sphereMesh_indices, GL_STATIC_DRAW)
+
+    sphMshNode = sg.SceneGraphNode("spere")
+    sphMshNode.transform = tr.matmul([
+        tr.uniformScale(0.3)
+    ])
+    sphMshNode.childs = [gpuSphere]
+
+    sphRotation = sg.SceneGraphNode("sphRotation")
+    sphRotation.childs = [sphMshNode]
+
+    return sphRotation
+    
 def createSphereNode(r, g, b, pipeline):
     sphere = createGPUShape(pipeline, createColorNormalSphere(20, r,g,b))
 

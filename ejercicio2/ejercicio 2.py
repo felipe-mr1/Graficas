@@ -215,8 +215,7 @@ class SunsetShaderProgram:
                 {
                     vec3 finalColor = vec3( newColor.r+ 0.0, newColor.g+0.0,newColor.b + (0.9-newColor.b));
                     outColor = vec4(finalColor, 1.0f);
-                }
-                
+                }     
             }
             """
 
