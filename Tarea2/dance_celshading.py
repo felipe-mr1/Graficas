@@ -1,3 +1,4 @@
+from curves import evalCurveCR
 import glfw
 from OpenGL.GL import *
 import OpenGL.GL.shaders
@@ -101,6 +102,7 @@ class PolarCamera:
         self.height = 0.5
         self.up = np.array([0, 0, 1])
         self.viewMatrix = None
+        self.curve = None
 
     def set_theta(self, delta):
         self.theta = (self.theta + delta) % (np.pi * 2)
@@ -289,21 +291,29 @@ if __name__ == "__main__":
     gpuRedCube = createGPUShape(phongPipeline, bs.createColorNormalsCube(1,0,0))
 
     scene = createScene(phongPipeline)
-    cube1 = createCube1(phongPipeline)
-    cube2 = createCube2(phongPipeline)
-    sphere = createSphereNode(0.3, 0.3, 0.3, phongPipeline)
-    tex_sphere = createTexSphereNode(phongTexPipeline)
-    torus = createTorusNode(phongPipeline)
-    torus2 = createTexTorusNode(phongTexPipeline, -0.1)
-    torus3 = createTorusNode(phongPipeline2, 0.1)
-    head = createBodyScene(phongPipeline)
+    
+    # Puntos para la curva
+    curvepoints = [
+        0,0,
+        0, np.pi/2,
+        0.4, np.pi,
+        0.5, 0,
+        0.6, -np.pi,
+        0.8, -np.pi/2,
+        1,0
+    ]
+    # Curve of Splines de catmull rom
+    curve1 = evalCurveCR(1800, curvepoints)
 
     shapeBaby = readOBJ('sprites/dababy.obj', (0.9, 0.6, 0.2))
     gpuBaby = createGPUShape(phongPipeline, shapeBaby)
 
     dababy = sg.SceneGraphNode("baby")
-    dababy.transform = tr.matmul([tr.translate(0,0,-1.9),tr.rotationZ(np.pi),tr.uniformScale(0.05)])
+    dababy.transform = tr.matmul([tr.translate(0,0,0.0),tr.rotationZ(np.pi),tr.uniformScale(0.025)])
     dababy.childs = [gpuBaby]
+
+    body = createBodyScene(phongPipeline, dababy)
+    body.transform = tr.translate(0,-0.4,-0.4)
 
     sphereMesh = createSphereMesh(64,0,0,0)
     sphereMesh_vertices, sphereMesh_indices = get_vertexs_and_indexes(sphereMesh)
@@ -312,15 +322,21 @@ if __name__ == "__main__":
     pipeline1.setupVAO(gpuSphere)
     gpuSphere.fillBuffers(sphereMesh_vertices, sphereMesh_indices, GL_STATIC_DRAW)
 
+    sphereNode = sg.SceneGraphNode("asd")
+    sphereNode.childs = [gpuSphere]
+
     toraxShape = createTorax()
     gpuTorax = es.GPUShape().initBuffers()
     phongTexPipeline.setupVAO(gpuTorax)
-    gpuTorax.texture = es.textureSimpleSetup("sprites/stone.png", GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
+    gpuTorax.texture = es.textureSimpleSetup("sprites/tux.png", GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_LINEAR, GL_LINEAR)
     gpuTorax.fillBuffers(toraxShape.vertices, toraxShape.indices, GL_STATIC_DRAW)
 
     toraxNode = sg.SceneGraphNode("torax")
-    toraxNode.transform = tr.matmul([tr.translate(0.0, 1.0, -0.9),tr.rotationZ(np.pi/2)])
+    toraxNode.transform = tr.matmul([tr.translate(0.0, -0.4, -0.4 - (0.4)),tr.rotationZ((3/2) *np.pi)])
     toraxNode.childs = [gpuTorax]
+
+    asdNode = sg.SceneGraphNode("2pipelines")
+    asdNode.childs = [toraxNode, sphereNode]
 
     perfMonitor = pm.PerformanceMonitor(glfw.get_time(), 0.5)
     # glfw will swap buffers as soon as possible
@@ -350,8 +366,9 @@ if __name__ == "__main__":
 
     var = 0
 
-    headRotation = sg.findNode(head, "headRotation")
-    centerBodyRot = sg.findNode(head, "centerBodyRotation")
+    leftArm = sg.findNode(body, "leftArm")
+    leftArmArticulation = articulation(curve1)
+    leftArmArticulation.set_model(leftArm)
 
     # Application loop
     while not glfw.window_should_close(window):
@@ -389,7 +406,7 @@ if __name__ == "__main__":
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 
         if (controller.slowMotion):
-            sleep(0.3)
+            sleep(0.03)
 
         # The axis is drawn without lighting effects
         if controller.showAxis:
@@ -412,9 +429,6 @@ if __name__ == "__main__":
             lightingPipeline = phongPipeline3
             texPipeline = phongTexPipeline
 
-        #r = np.abs(((0.5*t1+0.00) % 2)-1)
-        #g = np.abs(((0.5*t1+0.33) % 2)-1)
-        #b = np.abs(((0.5*t1+0.66) % 2)-1)
 
         r = 1.0
         g = 1.0
@@ -438,14 +452,11 @@ if __name__ == "__main__":
                 aux_g = 0.4
                 aux_b = 0.4
             var += 1
-            #aux_r = (aux_r + 0.333)%1
-            #aux_g = (aux_g + 0.333)%1
-            #aux_b = (aux_b + 0.333)%1
             s=t1
 
-        #torus.transform = tr.matmul([tr.rotationX(t1), tr.scale(5, 5, 5)])
-        headRotation.transform = tr.matmul([tr.rotationZ(theta), tr.rotationY(theta), tr.translate(0,0,0.1)])
-        centerBodyRot.transform = tr.matmul([tr.rotationZ(theta*0.2), tr.rotationY(theta*0.2), tr.translate(0,0,0.1)])
+        #leftArm.transform = tr.matmul([tr.rotationX(t1)])
+        leftArmArticulation.move()
+        leftArmArticulation.update()
         glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "La"), aux_r, aux_g, aux_b)
         glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Ld"), aux_r, aux_g, aux_b)
         glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Ls"), aux_r, aux_g, aux_b)
@@ -468,14 +479,16 @@ if __name__ == "__main__":
         glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
 
         # Drawing
+        #sg.drawSceneGraphNode(sphereNode, lightingPipeline, "model")
         sg.drawSceneGraphNode(scene, lightingPipeline, "model")
         #sg.drawSceneGraphNode(cube1, lightingPipeline, "model")
         #sg.drawSceneGraphNode(cube2, lightingPipeline, "model")
         #sg.drawSceneGraphNode(sphere, lightingPipeline, "model")
         #sg.drawSceneGraphNode(torus, lightingPipeline, "model")
-        sg.drawSceneGraphNode(head, lightingPipeline, "model")
+        #sg.drawSceneGraphNode(head, lightingPipeline, "model")
         #sg.drawSceneGraphNode(torus2, lightingPipeline, "model")
-        sg.drawSceneGraphNode(dababy, lightingPipeline, "model")
+        #sg.drawSceneGraphNode(dababy, lightingPipeline, "model")
+        sg.drawSceneGraphNode(body, lightingPipeline, "model")
         
         
         glUseProgram(texPipeline.shaderProgram)
@@ -500,8 +513,6 @@ if __name__ == "__main__":
         glUniformMatrix4fv(glGetUniformLocation(texPipeline.shaderProgram, "view"), 1, GL_TRUE, viewMatrix)
         glUniformMatrix4fv(glGetUniformLocation(texPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
 
-        #sg.drawSceneGraphNode(tex_sphere, phongTexPipeline, "model")
-        #sg.drawSceneGraphNode(torus2, phongTexPipeline, "model")
         sg.drawSceneGraphNode(toraxNode, texPipeline, "model")
 
         glUseProgram(lightingPipeline2.shaderProgram)
@@ -532,7 +543,8 @@ if __name__ == "__main__":
         glUseProgram(pipeline1.shaderProgram)
         glUniformMatrix4fv(glGetUniformLocation(pipeline1.shaderProgram, "projection"), 1, GL_TRUE, projection)
         glUniformMatrix4fv(glGetUniformLocation(pipeline1.shaderProgram, "view"), 1, GL_TRUE, viewMatrix)
-        glUniformMatrix4fv(glGetUniformLocation(pipeline1.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
+        glUniformMatrix4fv(glGetUniformLocation(pipeline1.shaderProgram, "model"), 1, GL_TRUE, tr.uniformScale(0.2))
+        #sg.drawSceneGraphNode(asdNode, pipeline1, "model")
         pipeline1.drawCall(gpuSphere)
 
         
@@ -546,7 +558,7 @@ if __name__ == "__main__":
     gpuAxis.clear()
     impl.shutdown()
     scene.clear()
-    cube1.clear()
-    cube2.clear()
+    #cube1.clear()
+    #cube2.clear()
 
     glfw.terminate()

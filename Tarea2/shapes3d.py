@@ -1,5 +1,6 @@
 """Funciones para crear distintas figuras y escenas en 3D """
 
+from model import articulation
 import numpy as np
 import math
 from OpenGL.GL import *
@@ -79,26 +80,88 @@ def createScene(pipeline):
 
     return trSceneNode
 
-def createBodyScene(pipeline):
+def createBodyScene(pipeline, babyNode):
     gpuGrayCube = createGPUShape(pipeline, bs.createColorNormalsCube(0.7, 0.7, 0.7))
-    gpuSphere = createGPUShape(pipeline, createColorNormalSphere(50, 0.7,0.7,0.7))
+    articulationShape = createGPUShape(pipeline, createColorNormalSphere(64, 0.4, 0.4, 0.4))
+    
+    neckNode = sg.SceneGraphNode("neck")
+    neckNode.transform = tr.matmul([tr.uniformScale(0.15)])
+    neckNode.childs = [articulationShape]
 
-    headNode = sg.SceneGraphNode("Head")
-    headNode.transform = tr.matmul([tr.translate(0,0,0.2),tr.uniformScale(0.5)])
-    headNode.childs = [gpuSphere]
+    leftShoulder = sg.SceneGraphNode("leftShoulder")
+    leftShoulder.transform = tr.matmul([tr.translate(-0.3,0,0.0) ,tr.uniformScale(0.15)])
+    leftShoulder.childs = [articulationShape]
+
+    leftArmPart = sg.SceneGraphNode("leftArmPart")
+    leftArmPart.transform = tr.matmul([tr.translate(-0.4,0,-0.15) ,tr.scale(0.1,0.1,0.4)])
+    leftArmPart.childs = [gpuGrayCube]
+
+    leftElbowPart = sg.SceneGraphNode("leftElbowPart")
+    leftElbowPart.transform = tr.matmul([tr.translate(-0.4,0,-0.4) ,tr.uniformScale(0.15)])
+    leftElbowPart.childs = [articulationShape]
+
+    leftLowerPart = sg.SceneGraphNode("leftLowerPart")
+    leftLowerPart.transform = tr.matmul([tr.translate(-0.4,0,-0.55) ,tr.scale(0.1,0.1,0.2)])
+    leftLowerPart.childs = [gpuGrayCube]
+
+    leftForearm = sg.SceneGraphNode("leftForearm") # Agragar la mano
+    leftForearm.childs = [leftElbowPart, leftLowerPart]
+
+    leftArm = sg.SceneGraphNode("leftArm")
+    leftArm.childs = [leftShoulder, leftArmPart, leftForearm]
+
+    rightShoulder = sg.SceneGraphNode("rightShoulder")
+    rightShoulder.transform = tr.matmul([tr.translate(0.3,0,0.0) ,tr.uniformScale(0.15)])
+    rightShoulder.childs = [articulationShape]
+
+    rightArmPart = sg.SceneGraphNode("rightArmPart")
+    rightArmPart.transform = tr.matmul([tr.translate(0.4,0,-0.15) ,tr.scale(0.1,0.1,0.4)])
+    rightArmPart.childs = [gpuGrayCube]
+
+    rightElbowPart = sg.SceneGraphNode("rigthElbowPart")
+    rightElbowPart.transform = tr.matmul([tr.translate(0.4,0,-0.4) ,tr.uniformScale(0.15)])
+    rightElbowPart.childs = [articulationShape]
+
+    rightLowerPart = sg.SceneGraphNode("rightLowerPart")
+    rightLowerPart.transform = tr.matmul([tr.translate(0.4,0,-0.55) ,tr.scale(0.1,0.1,0.2)])
+    rightLowerPart.childs = [gpuGrayCube]
+
+    rightForearm = sg.SceneGraphNode("rightForearm") # Agragar la mano
+    rightForearm.childs = [rightElbowPart, rightLowerPart]
+
+    rightArm = sg.SceneGraphNode("rightArm")
+    rightArm.childs = [rightShoulder, rightArmPart, rightForearm]
+
+    leftSomething = sg.SceneGraphNode("leftSomething")
+    leftSomething.transform = tr.matmul([tr.translate(-0.2,0.0,-0.7) ,tr.uniformScale(0.15)])
+    leftSomething.childs = [articulationShape]
+
+    leftLegPart = sg.SceneGraphNode("leftLegPart")
+    leftLegPart.transform = tr.matmul([tr.translate(-0.3,0,-1.0) ,tr.scale(0.1,0.1,0.6)])
+    leftLegPart.childs = [gpuGrayCube]
+
+    leftLeg = sg.SceneGraphNode("leftLeg")
+    leftLeg.childs = [leftSomething, leftLegPart]
+
+    rightSomething = sg.SceneGraphNode("leftSomething")
+    rightSomething.transform = tr.matmul([tr.translate(0.2,0,-0.7) ,tr.uniformScale(0.15)])
+    rightSomething.childs = [articulationShape]
+
+    rightLegPart = sg.SceneGraphNode("leftLegPart")
+    rightLegPart.transform = tr.matmul([tr.translate(0.3,0,-1.0) ,tr.scale(0.1,0.1,0.6)])
+    rightLegPart.childs = [gpuGrayCube]
+
+    rightLeg = sg.SceneGraphNode("rightLeg")
+    rightLeg.childs = [rightSomething, rightLegPart]
+
+    extremidades = sg.SceneGraphNode("extremidades")
+    extremidades.childs = [leftArm, rightArm, leftLeg, rightLeg]
 
     headRotationNode = sg.SceneGraphNode("headRotation")
-    headRotationNode.childs=[headNode]
-
-    centerBody = sg.SceneGraphNode("centerBody")
-    centerBody.transform = tr.matmul([tr.translate(0,0,-0.45),tr.scale(0.3,0.3,1.0)])
-    centerBody.childs = [gpuGrayCube]
-
-    centerBodyRot = sg.SceneGraphNode("centerBodyRotation")
-    centerBodyRot.childs = [centerBody]
+    headRotationNode.childs=[neckNode, babyNode]
 
     wholeBody = sg.SceneGraphNode("wholeBody")
-    wholeBody.childs = [centerBodyRot, headRotationNode]
+    wholeBody.childs = [extremidades, headRotationNode]
 
     return wholeBody
 
@@ -144,21 +207,21 @@ def createCube2(pipeline):
 
 def createTorax():
     vertices = [
-        0.2, -0.3, 0.4, 1, 1, 1, -1, 1, # 0 y las normales
-        0.2, 0.3, 0.4, 1, 1, 1, 1, 1, # 1
-        -0.2, 0.3, 0.4, 1, 1, -1, 1, 1, # 2
-        -0.2, -0.3, 0.4, 1, 1, -1, -1, 1, # 3
-        0.25, 0.0, 0.4, 1, 1, 1, 1, 1, # 4
+        0.2, -0.3, 0.4, 0.33, 0.0, 1, -1, 1, # 0
+        0.2, 0.3, 0.4, 0.66, 0.0, 1, 1, 1, # 1
+        -0.2, 0.3, 0.4, 1, 0.0, -1, 1, 1, # 2
+        -0.2, -0.3, 0.4, 0, 0, -1, -1, 1, # 3
+        0.25, 0.0, 0.4, 0.5, 0, 1, 1, 1, # 4
 
-        0.15, -0.2, 0.0, 1, 1, 1, -1, 0, # 5
-        0.15, 0.2, 0.0, 1, 1, 1, 1, 0, # 6
-        -0.15, 0.2, 0.0, 1, 1, -1, 1, 0, # 7
-        -0.15, -0.2, 0.0, 1, 1, -1, -1, 0, # 8
+        0.15, -0.2, 0.0, 0.2, 0.8, 1, -1, 0, # 5
+        0.15, 0.2, 0.0, 0.8, 0.8, 1, 1, 0, # 6
+        -0.15, 0.2, 0.0, 1, 0.8, -1, 1, 0, # 7
+        -0.15, -0.2, 0.0, 0, 0.8, -1, -1, 0, # 8
 
-        0.1, -0.15, -0.4, 1, 1, 1, -1, -1, # 9
-        0.1, 0.15, -0.4, 1, 1, 1, 1, -1, # 10
+        0.1, -0.15, -0.4, 0.33, 1, 1, -1, -1, # 9
+        0.1, 0.15, -0.4, 0.66, 1, 1, 1, -1, # 10
         -0.1, 0.15, -0.4, 1, 1, -1, 1, -1, # 11
-        -0.1, -0.15, -0.4, 1, 1, -1, -1, -1 # 12
+        -0.1, -0.15, -0.4, 0, 1, -1, -1, -1 # 12
     ]
     indices = [
         0,1,2,
@@ -186,7 +249,7 @@ def createTorax():
     ]
     return bs.Shape(vertices, indices)
 
-def createColorNormalSphere(N, r, g, b):
+def createColorNormalSphere(N, red, g, b):
 
     vertices = []
     indices = []
@@ -213,25 +276,25 @@ def createColorNormalSphere(N, r, g, b):
 
             # Creamos los quad superiores
             if i == 0:
-                vertices += [v0[0], v0[1], v0[2], r, g, b, n0[0], n0[1], n0[2]]
-                vertices += [v1[0], v1[1], v1[2], r, g, b, n1[0], n1[1], n1[2]]
-                vertices += [v2[0], v2[1], v2[2], r, g, b, n2[0], n2[1], n2[2]]
+                vertices += [v0[0], v0[1], v0[2], red, g, b, n0[0], n0[1], n0[2]]
+                vertices += [v1[0], v1[1], v1[2], red, g, b, n1[0], n1[1], n1[2]]
+                vertices += [v2[0], v2[1], v2[2], red, g, b, n2[0], n2[1], n2[2]]
                 indices += [ c + 0, c + 1, c +2 ]
                 c += 3
             # Creamos los quads inferiores
             elif i == (N-2):
-                vertices += [v0[0], v0[1], v0[2], r, g, b, n0[0], n0[1], n0[2]]
-                vertices += [v1[0], v1[1], v1[2], r, g, b, n1[0], n1[1], n1[2]]
-                vertices += [v3[0], v3[1], v3[2], r, g, b, n3[0], n3[1], n3[2]]
+                vertices += [v0[0], v0[1], v0[2], red, g, b, n0[0], n0[1], n0[2]]
+                vertices += [v1[0], v1[1], v1[2], red, g, b, n1[0], n1[1], n1[2]]
+                vertices += [v3[0], v3[1], v3[2], red, g, b, n3[0], n3[1], n3[2]]
                 indices += [ c + 0, c + 1, c +2 ]
                 c += 3
             
             # Creamos los quads intermedios
             else: 
-                vertices += [v0[0], v0[1], v0[2], r, g, b, n0[0], n0[1], n0[2]]
-                vertices += [v1[0], v1[1], v1[2], r, g, b, n1[0], n1[1], n1[2]]
-                vertices += [v2[0], v2[1], v2[2], r, g, b, n2[0], n2[1], n2[2]]
-                vertices += [v3[0], v3[1], v3[2], r, g, b, n3[0], n3[1], n3[2]]
+                vertices += [v0[0], v0[1], v0[2], red, g, b, n0[0], n0[1], n0[2]]
+                vertices += [v1[0], v1[1], v1[2], red, g, b, n1[0], n1[1], n1[2]]
+                vertices += [v2[0], v2[1], v2[2], red, g, b, n2[0], n2[1], n2[2]]
+                vertices += [v3[0], v3[1], v3[2], red, g, b, n3[0], n3[1], n3[2]]
                 indices += [ c + 0, c + 1, c +2 ]
                 indices += [ c + 2, c + 3, c + 0 ]
                 c += 4
