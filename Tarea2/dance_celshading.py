@@ -1,4 +1,4 @@
-from curves import evalCurveCR
+from curves import evalCurveCR, evalCurveCR9
 import glfw
 from OpenGL.GL import *
 import OpenGL.GL.shaders
@@ -12,7 +12,7 @@ import grafica.scene_graph as sg
 from shapes3d import *
 from grafica.gpu_shape import GPUShape
 import openmesh as om
-from time import sleep
+from time import sleep, thread_time
 import shader as sh
 
 import imgui
@@ -94,15 +94,17 @@ def readOBJ(filename, color):
         return bs.Shape(vertexData, indices)
 
 class PolarCamera:
-    def __init__(self):
-        self.center = np.array([0.0, 0.0, -0.5])
+    def __init__(self, aCurve):
+        self.center = np.array([0.0, 0.0, -0.5]) # z = -0.5
         self.theta = 0
-        self.rho = 5
+        self.rho = 1 # r = 5
         self.eye = np.array([0.0, 0.0, 0.0])
         self.height = 0.5
         self.up = np.array([0, 0, 1])
         self.viewMatrix = None
-        self.curve = None
+        self.curve = aCurve
+        self.pos = [0,0,0]
+        self.index = 0
 
     def set_theta(self, delta):
         self.theta = (self.theta + delta) % (np.pi * 2)
@@ -112,10 +114,29 @@ class PolarCamera:
             self.rho += delta
 
     def update_view(self):
-        self.eye[0] = self.rho * np.sin(self.theta) + self.center[0]
-        self.eye[1] = self.rho * np.cos(self.theta) + self.center[1]
+        # Cardioide
+        self.eye[0] = self.rho*(np.cos(self.theta)*(1 + np.cos(self.theta))) + 0.5 #self.rho * np.sin(self.theta) + self.center[0]
+        self.eye[1] = self.rho * (np.sin(self.theta)*(1 + np.cos(self.theta))) + 0.5 #self.rho * np.cos(self.theta) + self.center[1]
         self.eye[2] = self.height + self.center[2]
+        # Un osho parametrizado:
+        # x: self.rho *(np.cos(self.theta) / ((np.sin(theta)**2) + 1)) + self.center[0]
+        # y: self.rho *((np.cos(self.theta) * np.sin(self.theta)) / ((np.sin(self.theta)**2)+ 1)) + self.center[1]
 
+        viewMatrix = tr.lookAt(
+            self.eye,
+            self.center,
+            self.up
+        )
+        return viewMatrix
+    
+    def update_autoview(self):
+        self.index += 1
+        if self.index == len(self.curve):
+            self.index = 0
+        self.pos = self.curve[self.index]
+        self.eye[0] = self.pos[0]
+        self.eye[1] = self.pos[1]
+        self.eye[2] = self.pos[2]
         viewMatrix = tr.lookAt(
             self.eye,
             self.center,
@@ -124,7 +145,7 @@ class PolarCamera:
         return viewMatrix
 
 class Controller:
-    def __init__(self):
+    def __init__(self, cameraCurve):
         self.fillPolygon = True
         self.showAxis = True
 
@@ -133,11 +154,13 @@ class Controller:
         self.is_left_pressed = False
         self.is_right_pressed = False
 
-        self.polar_camera = PolarCamera()
+        self.polar_camera = PolarCamera(cameraCurve)
 
         self.lightingModel = LIGHT_CEL_SHADING
 
         self.slowMotion = False
+
+        self.autoCameraView = False
 
     def get_camera(self):
         return self.polar_camera
@@ -184,9 +207,11 @@ class Controller:
 
         if key == glfw.KEY_1:
             if action == glfw.PRESS:
-                self.slowMotion = True
-            elif action == glfw.RELEASE:
-                self.slowMotion = False
+                self.slowMotion = not self.slowMotion
+
+        if key == glfw.KEY_2:
+            if action == glfw.PRESS:
+                self.autoCameraView = not self.autoCameraView
 
         elif key == glfw.KEY_LEFT_CONTROL:
             if action == glfw.PRESS:
@@ -206,6 +231,9 @@ class Controller:
 
         if self.is_down_pressed:
             self.polar_camera.set_rho(5 * delta)
+
+    def autoCamera(self):
+        self.polar_camera.update_autoview()
 
 def transformGuiOverlay(locationZ, la, ld, ls, cte_at, lnr_at, qud_at, shininess):
 
@@ -262,7 +290,22 @@ if __name__ == "__main__":
 
     glfw.make_context_current(window)
 
-    controller = Controller()
+    cameraPoints = [
+        -0.2, 1.5, -0.4,      # 0
+        0, 0.8+0.3, -0.35,    # 1
+        0.4+0.3, 0.5, -0.3,   # 2
+        0, 0.15+0.3, -0.25,   # 3
+        -0.4-0.3, -0.5, -0.2, # 4
+        0, -0.8, -0.1,        # 5
+        0.4+0.3, -0.5, -0.2,  # 6
+        0, 0.15+0.3, -0.2,    # 7
+        -0.4-0.3, 0.5, -0.3,  # 8
+        0, 0.8+0.3, -0.35,    # 9
+        0.2, 1.5, -0.4        # 10
+    ]
+
+    cameraCurve = evalCurveCR9(1800, cameraPoints)
+    controller = Controller(cameraCurve)
     # Connecting the callback function 'on_key' to handle keyboard events
     glfw.set_key_callback(window, controller.on_key)
 
@@ -294,16 +337,29 @@ if __name__ == "__main__":
     
     # Puntos para la curva
     curvepoints = [
-        0,0,
-        0, np.pi/2,
-        0.4, np.pi,
-        0.5, 0,
-        0.6, -np.pi,
-        0.8, -np.pi/2,
-        1,0
+        0, -np.pi/2,    # 0
+        0.2, 0,         # 1
+        0.4, np.pi/2,   # 2
+        0.5, np.pi,     # 3
+        0.6, np.pi/2,   # 4
+        0.8, np.pi,     # 5
+        1,0             # 6
     ]
-    # Curve of Splines de catmull rom
+
+    curvepoints2 = [
+        0, 0,           # 0
+        0.2, np.pi/2,   # 1
+        0.4, np.pi,     # 2
+        0.5, np.pi/2,   # 3
+        0.6, np.pi,     # 4
+        0.8, np.pi/2,   # 5
+        1,0             # 6
+    ]
+
+    # Curves of Splines de catmull rom
     curve1 = evalCurveCR(1800, curvepoints)
+    curve2 = evalCurveCR(1800, curvepoints2)
+    cameraCurve = evalCurveCR9(1800, cameraPoints)
 
     shapeBaby = readOBJ('sprites/dababy.obj', (0.9, 0.6, 0.2))
     gpuBaby = createGPUShape(phongPipeline, shapeBaby)
@@ -348,7 +404,8 @@ if __name__ == "__main__":
     imgui.create_context()
     impl = GlfwRenderer(window)
 
-    controller = Controller()
+    
+    controller = Controller(cameraCurve)
     # Connecting the callback function 'on_key' to handle keyboard events
     glfw.set_key_callback(window, controller.on_key)
 
@@ -369,6 +426,14 @@ if __name__ == "__main__":
     leftArm = sg.findNode(body, "leftArm")
     leftArmArticulation = articulation(curve1)
     leftArmArticulation.set_model(leftArm)
+
+    rightArm = sg.findNode(body, "rightArm")
+    rightArmArticulation = articulation(curve1)
+    rightArmArticulation.set_model(rightArm)
+
+    leftForearm = sg.findNode(body, "leftForearm")
+    leftForearmArticulation = articulation(curve2)
+    leftForearmArticulation.set_model(leftForearm)
 
     # Application loop
     while not glfw.window_should_close(window):
@@ -407,6 +472,9 @@ if __name__ == "__main__":
 
         if (controller.slowMotion):
             sleep(0.03)
+
+        if (controller.autoCameraView):
+            viewMatrix = camera.update_autoview()
 
         # The axis is drawn without lighting effects
         if controller.showAxis:
@@ -454,9 +522,13 @@ if __name__ == "__main__":
             var += 1
             s=t1
 
-        #leftArm.transform = tr.matmul([tr.rotationX(t1)])
+        #leftForearmArticulation.move()
+        #leftForearmArticulation.update()
         leftArmArticulation.move()
         leftArmArticulation.update()
+        rightArmArticulation.move()
+        rightArmArticulation.update()
+
         glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "La"), aux_r, aux_g, aux_b)
         glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Ld"), aux_r, aux_g, aux_b)
         glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Ls"), aux_r, aux_g, aux_b)
@@ -479,15 +551,7 @@ if __name__ == "__main__":
         glUniformMatrix4fv(glGetUniformLocation(lightingPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
 
         # Drawing
-        #sg.drawSceneGraphNode(sphereNode, lightingPipeline, "model")
         sg.drawSceneGraphNode(scene, lightingPipeline, "model")
-        #sg.drawSceneGraphNode(cube1, lightingPipeline, "model")
-        #sg.drawSceneGraphNode(cube2, lightingPipeline, "model")
-        #sg.drawSceneGraphNode(sphere, lightingPipeline, "model")
-        #sg.drawSceneGraphNode(torus, lightingPipeline, "model")
-        #sg.drawSceneGraphNode(head, lightingPipeline, "model")
-        #sg.drawSceneGraphNode(torus2, lightingPipeline, "model")
-        #sg.drawSceneGraphNode(dababy, lightingPipeline, "model")
         sg.drawSceneGraphNode(body, lightingPipeline, "model")
         
         
