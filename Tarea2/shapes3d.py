@@ -36,6 +36,7 @@ def createTextureGPUShapeX(shape, pipeline,sWrapMode, tWrapMode, minFilterMode, 
     gpuShape.fillBuffers(shape.vertices, shape.indices, GL_STATIC_DRAW)
     gpuShape.texture = es.textureSimpleSetup(
         path, sWrapMode, tWrapMode, minFilterMode, maxFilterMode)
+    glGenerateMipmap(GL_TEXTURE_2D)
     return gpuShape
 
 def createScene(pipeline):
@@ -280,7 +281,7 @@ def createBodyScene2(pipeline, babyNode):
     rightLowerPart.transform = tr.matmul([tr.translate(0.0,0,-0.15) ,tr.scale(0.1,0.1,0.2)])
     rightLowerPart.childs = [gpuGrayCube]
     # deberia hacer un leftForearmNode aqui antes de rot o dsps o nada?????????????????
-    rightForearmRot = sg.SceneGraphNode("leftForearmRot")
+    rightForearmRot = sg.SceneGraphNode("rightForearmRot")
     rightForearmRot.childs = [rightElbowPart, rightLowerPart]
 
     rightForeArm = sg.SceneGraphNode("rightForearm")

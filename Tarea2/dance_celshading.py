@@ -1,4 +1,4 @@
-from curves import evalCurveBezier, evalCurveCR, evalCurveCR9
+from curves import evalCurveBezier, evalCurveCR, evalCurveCR9, evalCurveHermite
 import glfw
 from OpenGL.GL import *
 import OpenGL.GL.shaders
@@ -344,7 +344,7 @@ if __name__ == "__main__":
 
     scene = createScene(phongPipeline)
     
-    # Puntos para la curva
+    # Puntos para la curvas
     curvepoints = [
         0, -np.pi/2,    # 0
         0.2, 0,         # 1
@@ -361,25 +361,107 @@ if __name__ == "__main__":
         0.4, np.pi * (0.75), # 2
         0.5, np.pi/2,        # 3
         0.6, np.pi * (0.75), # 4
-        0.8, np.pi/2,        # 5
+        0.8, 0,              # 5
         1,0                  # 6
     ]
 
+    curvepoints3 = [
+        0, -np.pi/2,         # 0
+        0.2, 0,              # 1
+        0.4, -np.pi * (0.75),# 2
+        0.5, -np.pi * (0.25),# 3
+        0.6, -np.pi * (0.75),# 4
+        0.8, -np.pi * (0.5), # 5
+        1,0                  # 6
+    ]
+    # CTR
+    curvepoints4 = [
+        0, 0,                # 0
+        0.2, 0,              # 1
+        0.4, np.pi * (0.75), # 2
+        0.5, np.pi * (0.25), # 3
+        0.6, np.pi * (0.75), # 4
+        0.8, np.pi * (0.5),  # 5
+        1,0                  # 6
+    ]
+
+    curvepoints5 = [
+        0, 0,                 # 0
+        0.2, 0,               # 1
+        0.4, -np.pi * (0.5),   # 2
+        0.5, -np.pi * (0.25),  # 3
+        0.6, 0,               # 4
+        0.8, -np.pi * (0.5),   # 5
+        1,0                   # 6
+    ]
+
+    curvepoints6 = [
+        0, 0,                 # 0
+        0.2, 0,               # 1
+        0.4, np.pi * (0.5),   # 2
+        0.5, np.pi * (0.25),  # 3
+        0.6, 0,               # 4
+        0.8, np.pi * (0.5),   # 5
+        1,0                   # 6
+    ]
+
+    curvepoints7 = [
+        0, 0,                 # 0
+        0.2, np.pi/2,         # 1
+        0.4, np.pi * (0.25),  # 2
+        0.5, np.pi * (0.2),   # 3
+        0.6, np.pi * (0.1),   # 4
+        0.8, 0,               # 5
+        1,0                   # 6
+    ]
+
+    curvepoints8 = [
+        0, 0,                 # 0
+        0.2, 0,               # 1
+        0.4, np.pi * (0.5),   # 2
+        0.5, np.pi * (0.0),   # 3
+        0.6, np.pi * (0.5),   # 4
+        0.8, np.pi * (0.25),  # 5
+        1,0                   # 6
+    ]
+
     bezierPoints = [
-        0, 0,
-        0.33, np.pi,
-        0.66, -np.pi,
-        1, 0
+        0, 0,         # 0
+        0.33, np.pi * 0.2,  # 1
+        0.66, -np.pi* 0.2, # 2
+        1, 0          # 3
+    ]
+
+    bezierPoints2 = [
+        0, 0,         # 0
+        0.33, np.pi * 0.25,  # 1
+        0.66, -np.pi* 0.25, # 2
+        1, 0          # 3
+    ]
+
+    hermitePoints = [
+        0, 0,                # p1
+        1, 0,                # p2
+        0.947, 9.13 * np.pi, # t1
+        1.243, 8.34 * np.pi  # t2
     ]
 
     # Curves of Splines de catmull rom
     curve1 = evalCurveCR(1800, curvepoints)
     curve2 = evalCurveCR(1800, curvepoints2)
+    curve3 = evalCurveCR(1800, curvepoints3)
+    curve4 = evalCurveCR(1800, curvepoints4)
+    curve5 = evalCurveCR(1800, curvepoints5)
+    curve6 = evalCurveCR(1800, curvepoints6)
+    curve7 = evalCurveCR(900, curvepoints7)
+    curve8 = evalCurveCR(900, curvepoints8)
     cameraCurve = evalCurveCR9(1800, cameraPoints)
     bezierCurve = evalCurveBezier(1800, bezierPoints)
+    bezierCurve2 = evalCurveBezier(1800, bezierPoints2)
+    hermiteCurve = evalCurveHermite(1800, hermitePoints)
 
     Torus = createTextureGPUShapeX(createTextureTorus(50), CSphongTexPipeline, 
-    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_LINEAR, GL_NEAREST, 'sprites/metal.png')
+    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR, GL_NEAREST, 'sprites/metal.png')
     torusNode = sg.SceneGraphNode("torus")
     torusNode.transform = tr.matmul([tr.translate(-2.0,-1.5,-2.0),tr.scale(0.5, 0.5, 2.0)])
     torusNode.childs = [Torus]
@@ -418,8 +500,9 @@ if __name__ == "__main__":
     screenShape = s3d.createTextureNormalsCube(2,2)
     gpuScreen = es.GPUShape().initBuffers() 
     CSphongTexPipeline.setupVAO(gpuScreen)
-    gpuScreen.texture = es.textureSimpleSetup("sprites/something.png", GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST)
+    gpuScreen.texture = es.textureSimpleSetup("sprites/something.png", GL_REPEAT, GL_REPEAT, GL_NEAREST_MIPMAP_LINEAR, GL_NEAREST)
     gpuScreen.fillBuffers(screenShape.vertices, screenShape.indices, GL_STATIC_DRAW)
+    glGenerateMipmap(GL_TEXTURE_2D)
 
     screenNode = sg.SceneGraphNode("screen")
     screenNode.transform = tr.translate(-1.0, -2.9, 0)
@@ -427,8 +510,9 @@ if __name__ == "__main__":
 
     gpuScreen2 = copy.deepcopy(gpuScreen)
     CSphongTexPipeline.setupVAO(gpuScreen2)
-    gpuScreen2.texture = es.textureSimpleSetup("sprites/metal.png", GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST)
+    gpuScreen2.texture = es.textureSimpleSetup("sprites/metal.png", GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_NEAREST)
     gpuScreen2.fillBuffers(screenShape.vertices, screenShape.indices, GL_STATIC_DRAW)
+    glGenerateMipmap(GL_TEXTURE_2D)
 
     screen2Node = sg.SceneGraphNode("screen")
     screen2Node.transform = tr.translate(1.0, -2.9, 0.0)
@@ -465,20 +549,30 @@ if __name__ == "__main__":
 
     finalTransform = [0,-0.4, -0.4]
 
+    setOfCurvesLA = [curve1,curve3, curve5 ,curve7]
+    setOfCurvesRA = [curve1,curve4, curve6,curve7]
+    setOfCurvesLFA = [curve2,curve3, curve5 ,curve7]
+    setOfCurvesRFA = [curve2,curve4, curve6 ,curve7]
+    setOfCurvesRL = [curve8, bezierCurve, bezierCurve2, curve7]
+
     leftArm = sg.findNode(body, "leftArmRot")
-    leftArmArticulation = articulation(curve1, finalTransform)
+    leftArmArticulation = articulation(setOfCurvesLA)
     leftArmArticulation.set_model(leftArm)
 
     rightArm = sg.findNode(body, "rightArmRot")
-    rightArmArticulation = articulation(curve1, finalTransform)
+    rightArmArticulation = articulation(setOfCurvesRA)
     rightArmArticulation.set_model(rightArm)
 
     leftForearm = sg.findNode(body, "leftForearmRot")
-    leftForearmArticulation = articulation(curve2, finalTransform)
+    leftForearmArticulation = articulation(setOfCurvesLFA)
     leftForearmArticulation.set_model(leftForearm)
+
+    rightForearm = sg.findNode(body, "rightForearmRot")
+    rightForearmArticulation = articulation(setOfCurvesRFA)
+    rightForearmArticulation.set_model(rightForearm)
     
     rightLeg1 = sg.findNode(body, "rightLegRot")
-    rightLegArticulation = articulation(curve1, finalTransform)
+    rightLegArticulation = articulation(setOfCurvesRL)
     rightLegArticulation.set_model(rightLeg1)
 
     # Application loop
@@ -570,6 +664,8 @@ if __name__ == "__main__":
 
         leftForearmArticulation.move()
         leftForearmArticulation.update()
+        rightForearmArticulation.move()
+        rightForearmArticulation.update()
         leftArmArticulation.move()
         leftArmArticulation.update()
         rightArmArticulation.move()
