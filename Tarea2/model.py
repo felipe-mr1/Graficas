@@ -6,10 +6,11 @@ import random as rd
 import grafica.transformations as tr
 
 class articulation():
-    def __init__(self, aCurve):
+    def __init__(self, aCurve, aFinalTransform):
         self.curve = aCurve
         self.index = 0
         self.pos = self.curve[0]
+        self.finalTransform = aFinalTransform
 
     def move(self):
         if self.index < len(self.curve) -4:
@@ -26,4 +27,6 @@ class articulation():
         self.controller = new_controller
     
     def update(self):
-        self.model.transform = tr.matmul([tr.rotationX(self.pos[1]),self.transform])
+        self.model.transform = tr.matmul([tr.rotationX(self.pos[1]),self.transform]) # self.transform
+
+# tr.translate(self.finalTransform[0], self.finalTransform[1],self.finalTransform[2])

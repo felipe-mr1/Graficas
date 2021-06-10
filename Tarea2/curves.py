@@ -99,3 +99,19 @@ def evalCurveCR9(N, points):
         curve[i+(7*x), 0:3] = np.matmul(sSCR8, T).T
 
     return curve
+
+def evalCurveBezier(N, points):
+    P0 = np.array([[points[0], points[1]]]).T
+    P1 = np.array([[points[2], points[3]]]).T
+    P2 = np.array([[points[4], points[5]]]).T
+    P3 = np.array([[points[6], points[7]]]).T
+
+    B = bezierMatrix(P0, P1, P2, P3)
+
+    ts = np.linspace(0.0, 1.0, N)
+    curve = np.ndarray(shape=(len(ts), 3), dtype=float)
+
+    for i in range(len(ts)):
+        T = generateT(ts[i])
+        curve[i, 0:3] = np.matmul(B, T).T
+    return curve

@@ -11,6 +11,7 @@ import grafica.transformations as tr
 import grafica.scene_graph as sg
 import openmesh as om
 import random
+import copy
 
 # Convenience function to ease initialization
 def createGPUShape(pipeline, shape):
@@ -26,6 +27,15 @@ def createTextureGPUShape(shape, pipeline, path):
     gpuShape.fillBuffers(shape.vertices, shape.indices, GL_STATIC_DRAW)
     gpuShape.texture = es.textureSimpleSetup(
         path, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST)
+    return gpuShape
+
+def createTextureGPUShapeX(shape, pipeline,sWrapMode, tWrapMode, minFilterMode, maxFilterMode, path):
+    # Funcion Conveniente para facilitar la inicializacion de un GPUShape con texturas
+    gpuShape = es.GPUShape().initBuffers()
+    pipeline.setupVAO(gpuShape)
+    gpuShape.fillBuffers(shape.vertices, shape.indices, GL_STATIC_DRAW)
+    gpuShape.texture = es.textureSimpleSetup(
+        path, sWrapMode, tWrapMode, minFilterMode, maxFilterMode)
     return gpuShape
 
 def createScene(pipeline):
@@ -79,6 +89,49 @@ def createScene(pipeline):
     trSceneNode.childs = [sceneNode]
 
     return trSceneNode
+
+def createTextureQuad(nx, ny):
+
+    # Defining locations and texture coordinates for each vertex of the shape    
+    vertices = [
+    #   positions        texture
+        -0.5, -0.5, 0.0,  0, ny, 1,1,1,
+         0.5, -0.5, 0.0, nx, ny, 1,1,1,
+         0.5,  0.5, 0.0, nx, 0, 1,1,1,
+        -0.5,  0.5, 0.0,  0, 0, 1,1,1]
+
+    # Defining connections among vertices
+    # We have a triangle every 3 indices specified
+    indices = [
+         0, 1, 2,
+         2, 3, 0]
+
+    return bs.Shape(vertices, indices)
+
+def createDanceScene(pipeline):
+    quad = createTextureQuad(1,1)
+    gpuLeftRightWall = createGPUShape(pipeline, quad)
+    gpuLeftRightWall.texture = es.textureSimpleSetup(
+        "sprites/dancing3.png", GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR) # o linear??
+
+    gpuBackWall = copy.deepcopy(gpuLeftRightWall)
+    gpuBackWall.texture = es.textureSimpleSetup(
+        "sprites/dancing2.png", GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
+
+    leftWall = sg.SceneGraphNode("leftWall")
+    leftWall.transform = tr.matmul([tr.translate(-2.49, 0, 0),tr.rotationX(np.pi/2),tr.rotationY(np.pi/2),tr.uniformScale(5.0)])
+    leftWall.childs = [gpuLeftRightWall]
+    rightWall = sg.SceneGraphNode("rightWall")
+    rightWall.transform = tr.matmul([tr.translate(2.49, 0, 0),tr.rotationX(np.pi/2),tr.rotationY(np.pi/2),tr.uniformScale(5.0)])
+    rightWall.childs = [gpuLeftRightWall]
+    backWall = sg.SceneGraphNode("backWall")
+    backWall.transform = tr.matmul([tr.translate(0.0, -2.6, 0),tr.rotationX(np.pi/2),tr.uniformScale(5.0)])
+    backWall.childs = [gpuBackWall]
+
+    walls = sg.SceneGraphNode("Walls")
+    walls.childs = [leftWall, rightWall, backWall]
+
+    return walls
 
 def createBodyScene(pipeline, babyNode):
     gpuGrayCube = createGPUShape(pipeline, bs.createColorNormalsCube(0.7, 0.7, 0.7))
@@ -154,6 +207,129 @@ def createBodyScene(pipeline, babyNode):
     rightLeg = sg.SceneGraphNode("rightLeg")
     rightLeg.childs = [rightSomething, rightLegPart]
 
+    rightLegRot = sg.SceneGraphNode("rightLegRot")
+    rightLegRot.transform = tr.translate(0,-0.0,-0.0)
+    rightLegRot.childs = [rightLeg]
+
+    extremidades = sg.SceneGraphNode("extremidades")
+    extremidades.childs = [leftArm, rightArm, leftLeg, rightLegRot]
+
+    headRotationNode = sg.SceneGraphNode("headRotation")
+    headRotationNode.childs=[neckNode, babyNode]
+
+    wholeBody = sg.SceneGraphNode("wholeBody")
+    wholeBody.childs = [extremidades, headRotationNode]
+
+    return wholeBody
+
+def createBodyScene2(pipeline, babyNode):
+    gpuGrayCube = createGPUShape(pipeline, bs.createColorNormalsCube(0.7, 0.7, 0.7))
+    articulationShape = createGPUShape(pipeline, createColorNormalSphere(64, 0.4, 0.4, 0.4))
+
+    neckNode = sg.SceneGraphNode("neck")
+    neckNode.transform = tr.matmul([tr.uniformScale(0.15)])
+    neckNode.childs = [articulationShape]
+
+    # Brazo Izquierdo
+
+    leftShoulder = sg.SceneGraphNode("leftShoulder")
+    leftShoulder.transform = tr.matmul([tr.uniformScale(0.15)])
+    leftShoulder.childs = [articulationShape]
+
+    leftArmPart = sg.SceneGraphNode("leftArmPart")
+    leftArmPart.transform = tr.matmul([tr.translate(0.0,0,-0.15) ,tr.scale(0.1,0.1,0.4)])
+    leftArmPart.childs = [gpuGrayCube]
+    
+    leftElbowPart = sg.SceneGraphNode("leftElbowPart")
+    leftElbowPart.transform = tr.matmul([tr.translate(0.0,0,0) ,tr.uniformScale(0.15)])
+    leftElbowPart.childs = [articulationShape]
+
+    leftLowerPart = sg.SceneGraphNode("leftLowerPart")
+    leftLowerPart.transform = tr.matmul([tr.translate(0.0,0,-0.15) ,tr.scale(0.1,0.1,0.2)])
+    leftLowerPart.childs = [gpuGrayCube]
+    # deberia hacer un leftForearmNode aqui antes de rot o dsps o nada?????????????????
+    leftForearmRot = sg.SceneGraphNode("leftForearmRot")
+    leftForearmRot.childs = [leftElbowPart, leftLowerPart]
+
+    leftForeArm = sg.SceneGraphNode("leftForearm")
+    leftForeArm.transform = tr.translate(0, 0, -0.4)
+    leftForeArm.childs = [leftForearmRot]
+
+    leftArmRot = sg.SceneGraphNode("leftArmRot")
+    leftArmRot.childs = [leftShoulder, leftArmPart, leftForeArm]
+
+    leftArm = sg.SceneGraphNode("leftArm")
+    leftArm.transform = tr.translate(-0.35, 0, 0)
+    leftArm.childs = [leftArmRot]
+
+    # Brazo Derecho
+
+    rightShoulder = sg.SceneGraphNode("rightShoulder")
+    rightShoulder.transform = tr.matmul([tr.uniformScale(0.15)])
+    rightShoulder.childs = [articulationShape]
+
+    rightArmPart = sg.SceneGraphNode("rightArmPart")
+    rightArmPart.transform = tr.matmul([tr.translate(0.0,0,-0.15) ,tr.scale(0.1,0.1,0.4)])
+    rightArmPart.childs = [gpuGrayCube]
+    
+    rightElbowPart = sg.SceneGraphNode("rightElbowPart")
+    rightElbowPart.transform = tr.matmul([tr.translate(0.0,0,0) ,tr.uniformScale(0.15)])
+    rightElbowPart.childs = [articulationShape]
+
+    rightLowerPart = sg.SceneGraphNode("rightLowerPart")
+    rightLowerPart.transform = tr.matmul([tr.translate(0.0,0,-0.15) ,tr.scale(0.1,0.1,0.2)])
+    rightLowerPart.childs = [gpuGrayCube]
+    # deberia hacer un leftForearmNode aqui antes de rot o dsps o nada?????????????????
+    rightForearmRot = sg.SceneGraphNode("leftForearmRot")
+    rightForearmRot.childs = [rightElbowPart, rightLowerPart]
+
+    rightForeArm = sg.SceneGraphNode("rightForearm")
+    rightForeArm.transform = tr.translate(0, 0, -0.4)
+    rightForeArm.childs = [rightForearmRot]
+
+    rightArmRot = sg.SceneGraphNode("rightArmRot")
+    rightArmRot.childs = [rightShoulder, rightArmPart, rightForeArm]
+
+    rightArm = sg.SceneGraphNode("rightArm")
+    rightArm.transform = tr.translate(0.35, 0, 0)
+    rightArm.childs = [rightArmRot]
+
+    # Pierna Izquierda
+
+    leftSomething = sg.SceneGraphNode("leftSomething")
+    leftSomething.transform = tr.matmul([tr.uniformScale(0.15)])
+    leftSomething.childs = [articulationShape]
+
+    leftLegPart = sg.SceneGraphNode("leftLegPart")
+    leftLegPart.transform = tr.matmul([tr.translate(0,0,-0.3) ,tr.scale(0.1,0.1,0.6)])
+    leftLegPart.childs = [gpuGrayCube]
+
+    leftLegRot = sg.SceneGraphNode("leftLegRot")
+    leftLegRot.childs = [leftSomething, leftLegPart]
+
+    leftLeg = sg.SceneGraphNode("leftLeg")
+    leftLeg.transform = tr.translate(-0.2, 0,-0.7)
+    leftLeg.childs = [leftLegRot]
+
+    # Pierna Derecha
+
+    rightSomething = sg.SceneGraphNode("rightSomething")
+    rightSomething.transform = tr.matmul([tr.uniformScale(0.15)])
+    rightSomething.childs = [articulationShape]
+
+    rightLegPart = sg.SceneGraphNode("rightLegPart")
+    rightLegPart.transform = tr.matmul([tr.translate(0,0,-0.3) ,tr.scale(0.1,0.1,0.6)])
+    rightLegPart.childs = [gpuGrayCube]
+
+    rightLegRot = sg.SceneGraphNode("rightLegRot")
+    rightLegRot.childs = [rightSomething, rightLegPart]
+
+    rightLeg = sg.SceneGraphNode("rightLeg")
+    rightLeg.transform = tr.translate(0.2, 0,-0.7)
+    rightLeg.childs = [rightLegRot]
+
+    # Cuerpo completo
+
     extremidades = sg.SceneGraphNode("extremidades")
     extremidades.childs = [leftArm, rightArm, leftLeg, rightLeg]
 
@@ -204,6 +380,9 @@ def createCube2(pipeline):
     scaledObject.childs = [objectNode]
 
     return scaledObject
+
+def createLineTriangle():
+    return
 
 def createTorax():
     vertices = [
@@ -301,12 +480,9 @@ def createColorNormalSphere(N, red, g, b):
     return bs.Shape(vertices, indices)
 
 def createSphereMesh(N,r,g,b):
-    vertices = []
-    indices = []
     dTheta = 2 * np.pi /N
     dPhi = 2 * np.pi /N
     r = 0.5
-    c = 0
 
     sphereMesh = om.TriMesh()
 
@@ -328,22 +504,12 @@ def createSphereMesh(N,r,g,b):
 
             # Creamos los quad superiores
             if i == 0:
-                vertices += [v0[0], v0[1], v0[2], r, g, b, n0[0], n0[1], n0[2]]
-                vertices += [v1[0], v1[1], v1[2], r, g, b, n1[0], n1[1], n1[2]]
-                vertices += [v2[0], v2[1], v2[2], r, g, b, n2[0], n2[1], n2[2]]
-                indices += [ c + 0, c + 1, c +2 ]
-                c += 3
                 vh0 = sphereMesh.add_vertex([v0[0], v0[1], v0[2]])
                 vh1 = sphereMesh.add_vertex([v1[0], v1[1], v1[2]])
                 vh2 = sphereMesh.add_vertex([v2[0], v2[1], v2[2]])
                 sphereMesh.add_face(vh0, vh1, vh2)
             # Creamos los quads inferiores
             elif i == (N-2):
-                vertices += [v0[0], v0[1], v0[2], r, g, b, n0[0], n0[1], n0[2]]
-                vertices += [v1[0], v1[1], v1[2], r, g, b, n1[0], n1[1], n1[2]]
-                vertices += [v3[0], v3[1], v3[2], r, g, b, n3[0], n3[1], n3[2]]
-                indices += [ c + 0, c + 1, c +2 ]
-                c += 3
                 vh0 = sphereMesh.add_vertex([v0[0], v0[1], v0[2]])
                 vh1 = sphereMesh.add_vertex([v1[0], v1[1], v1[2]])
                 vh2 = sphereMesh.add_vertex([v2[0], v2[1], v2[2]])
@@ -351,13 +517,6 @@ def createSphereMesh(N,r,g,b):
             
             # Creamos los quads intermedios
             else: 
-                vertices += [v0[0], v0[1], v0[2], r, g, b, n0[0], n0[1], n0[2]]
-                vertices += [v1[0], v1[1], v1[2], r, g, b, n1[0], n1[1], n1[2]]
-                vertices += [v2[0], v2[1], v2[2], r, g, b, n2[0], n2[1], n2[2]]
-                vertices += [v3[0], v3[1], v3[2], r, g, b, n3[0], n3[1], n3[2]]
-                indices += [ c + 0, c + 1, c +2 ]
-                indices += [ c + 2, c + 3, c + 0 ]
-                c += 4
                 vh0 = sphereMesh.add_vertex([v0[0], v0[1], v0[2]])
                 vh1 = sphereMesh.add_vertex([v1[0], v1[1], v1[2]])
                 vh2 = sphereMesh.add_vertex([v2[0], v2[1], v2[2]])
@@ -366,27 +525,61 @@ def createSphereMesh(N,r,g,b):
                 sphereMesh.add_face(vh2, vh3, vh0)
     return sphereMesh
 
-def get_vertexs_and_indexes(mesh):
+def get_vertexs_and_indexes(mesh, color):
     # Obtenemos las caras de la malla
     faces = mesh.faces()
 
+    mesh.request_face_normals()
+    mesh.request_vertex_normals()
+    mesh.update_normals()
+
+    r = color[0]
+    g = color[1]
+    b = color[2]
     # Creamos una lista para los vertices e indices
     vertexs = []
+    indexes = []
+
+    def extractCoordinates(numpyVector3):
+        assert len(numpyVector3) == 3
+        x = vertex[0]
+        y = vertex[1]
+        z = vertex[2]
+        return [x,y,z]
+
+    for faceIt in mesh.faces():
+        faceId = faceIt.idx()
+
+        # Checking each vertex of the face
+        for faceVertexIt in mesh.fv(faceIt):
+            faceVertexId = faceVertexIt.idx()
+
+            # Obtaining the position and normal of each vertex
+            vertex = mesh.point(faceVertexIt)
+            normal = mesh.normal(faceVertexIt)
+
+            x, y, z = extractCoordinates(vertex)
+            nx, ny, nz = extractCoordinates(normal)
+
+            vertexs += [x, y, z, r, g, b, nx, ny, nz]
+            indexes += [len(vertexs)//9 - 1]
 
     # Obtenemos los vertices y los recorremos
+    """
     for vertex in mesh.points():
         vertexs += vertex.tolist()
         # Agregamos un color al azar
-        vertexs += [0, 0, 0]
+        vertexs += [r, g, b]
+    """
 
-    indexes = []
-
+    """
     for face in faces:
         # Obtenemos los vertices de la cara
         face_indexes = mesh.fv(face)
         for vertex in face_indexes:
             # Obtenemos el numero de indice y lo agregamos a la lista
             indexes += [vertex.idx()]
+    """
 
     return vertexs, indexes
 
@@ -496,7 +689,7 @@ def createTextureTorus(N):
             n2 = [(0.5 + np.cos(theta1))*np.cos(phi1), (0.5 + np.cos(theta1))*np.sin(phi1),  np.sin(theta1)]
             n3 = [(0.5 + np.cos(theta))*np.cos(phi1), (0.5 + np.cos(theta))*np.sin(phi1),   np.sin(theta)]
 
-            vertices += [v0[0], v0[1], v0[2], 0, 1, n0[0], n0[1], n0[2]]
+            vertices += [v0[0], v0[1], v0[2], 0, 0, n0[0], n0[1], n0[2]]
             vertices += [v1[0], v1[1], v1[2], 0, 1, n1[0], n1[1], n1[2]]
             vertices += [v2[0], v2[1], v2[2], 1, 1, n2[0], n2[1], n2[2]]
             vertices += [v3[0], v3[1], v3[2], 0, 1, n3[0], n3[1], n3[2]]
@@ -504,6 +697,56 @@ def createTextureTorus(N):
             indices += [ c + 2, c + 3, c + 0 ]
             c += 4
     
+    return bs.Shape(vertices, indices)
+
+def createTextureNormalsCube(nx, ny):
+
+    # Defining locations,texture coordinates and normals for each vertex of the shape  
+    vertices = [
+    #   positions            tex coords   normals
+    # Z+
+        -0.5, -0.5,  0.5,    0, ny,        0,0,1,
+         0.5, -0.5,  0.5,    nx, ny,        0,0,1,
+         0.5,  0.5,  0.5,    nx, 0,        0,0,1,
+        -0.5,  0.5,  0.5,    0, 0,        0,0,1,   
+    # Z-          
+        -0.5, -0.5, -0.5,    0, ny,        0,0,-1,
+         0.5, -0.5, -0.5,    nx, ny,        0,0,-1,
+         0.5,  0.5, -0.5,    nx, 0,        0,0,-1,
+        -0.5,  0.5, -0.5,    0, 0,        0,0,-1,
+       
+    # X+          
+         0.5, -0.5, -0.5,    0, ny,        1,0,0,
+         0.5,  0.5, -0.5,    nx, ny,        1,0,0,
+         0.5,  0.5,  0.5,    nx, 0,        1,0,0,
+         0.5, -0.5,  0.5,    0, 0,        1,0,0,   
+    # X-          
+        -0.5, -0.5, -0.5,    0, ny,        -1,0,0,
+        -0.5,  0.5, -0.5,    nx, ny,        -1,0,0,
+        -0.5,  0.5,  0.5,    nx, 0,        -1,0,0,
+        -0.5, -0.5,  0.5,    0, 0,        -1,0,0,   
+    # Y+          
+        -0.5,  0.5, -0.5,    0, ny,        0,1,0,
+         0.5,  0.5, -0.5,    nx, ny,        0,1,0,
+         0.5,  0.5,  0.5,    nx, 0,        0,1,0,
+        -0.5,  0.5,  0.5,    0, 0,        0,1,0,   
+    # Y-          
+        -0.5, -0.5, -0.5,    0, ny,        0,-1,0,
+         0.5, -0.5, -0.5,    nx, ny,        0,-1,0,
+         0.5, -0.5,  0.5,    nx, 0,        0,-1,0,
+        -0.5, -0.5,  0.5,    0, 0,        0,-1,0
+        ]   
+
+    # Defining connections among vertices
+    # We have a triangle every 3 indices specified
+    indices = [
+          0, 1, 2, 2, 3, 0, # Z+
+          7, 6, 5, 5, 4, 7, # Z-
+          8, 9,10,10,11, 8, # X+
+         15,14,13,13,12,15, # X-
+         19,18,17,17,16,19, # Y+
+         20,21,22,22,23,20] # Y-
+
     return bs.Shape(vertices, indices)
 
 
