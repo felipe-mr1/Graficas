@@ -167,6 +167,8 @@ class Controller:
 
         self.fourTones = False
 
+        self.spotLight = False
+
     def get_camera(self):
         return self.polar_camera
 
@@ -223,6 +225,12 @@ class Controller:
                 self.fourTones = True
             elif action == glfw.RELEASE:
                 self.fourTones = False
+
+        if key == glfw.KEY_4:
+            if action == glfw.PRESS:
+                self.spotLight = True
+            elif action == glfw.RELEASE:
+                self.spotLight = False
 
         elif key == glfw.KEY_LEFT_CONTROL:
             if action == glfw.PRESS:
@@ -328,6 +336,7 @@ if __name__ == "__main__":
     CSphongTexPipeline2 = sh.CelShading4TonesPhongShaderProgram()
     phongTexPipeline = ls.SimpleTexturePhongShaderProgram()
     CSphongTexPipeline = sh.CelShadingTexturePhongShaderProgram()
+    CSspotlightPipeline = sh.CelShadingSpotLight()
 
     # This shader program does not consider lighting
     mvpPipeline = es.SimpleModelViewProjectionShaderProgram()
@@ -549,6 +558,7 @@ if __name__ == "__main__":
     screenNode.transform = tr.translate(-1.0, -2.9, 0)
     screenNode.childs = [gpuScreen]
 
+    # Reutilizamos vertices e indices de la figura anterior
     gpuScreen2 = copy.deepcopy(gpuScreen)
     CSphongTexPipeline.setupVAO(gpuScreen2)
     gpuScreen2.texture = es.textureSimpleSetup("sprites/lavalamp.jpg", GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_NEAREST)
@@ -558,6 +568,11 @@ if __name__ == "__main__":
     screen2Node = sg.SceneGraphNode("screen")
     screen2Node.transform = tr.translate(1.0, -2.9, 0.0)
     screen2Node.childs = [gpuScreen2]
+
+    gpuTest = createGPUShape(CSspotlightPipeline, createColorTorus(50))
+    testNode = sg.SceneGraphNode("test")
+    testNode.transform = tr.matmul([tr.translate(0,-2.0,-0.5),tr.uniformScale(0.5)])
+    testNode.childs = [gpuTest]
 
     perfMonitor = pm.PerformanceMonitor(glfw.get_time(), 0.5)
     # glfw will swap buffers as soon as possible
@@ -695,6 +710,11 @@ if __name__ == "__main__":
             texPipeline = phongTexPipeline
         if controller.fourTones == True:
             lightingPipeline = CSphongTexPipeline2
+        if controller.spotLight == True:
+            lightingPipeline = CSspotlightPipeline
+            glUseProgram(lightingPipeline.shaderProgram)
+            glUniform1f(glGetUniformLocation(lightingPipeline.shaderProgram, "concentrationP"), 100.0)
+            glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "spotDirR"), 0.0, 0.0, -3.0)
 
 
         r = 1.0
@@ -795,30 +815,32 @@ if __name__ == "__main__":
 
         sg.drawSceneGraphNode(torusNode, texPipeline, "model")
 
-        """
-        glUseProgram(lightingPipeline2.shaderProgram)
+        
+        glUseProgram(CSspotlightPipeline.shaderProgram)
         # Light in all components: ambient, diffuse and specular.
-        glUniform3f(glGetUniformLocation(lightingPipeline2.shaderProgram, "La"), aux_r, aux_g, aux_b)
-        glUniform3f(glGetUniformLocation(lightingPipeline2.shaderProgram, "Ld"), aux_r, aux_g, aux_b)
-        glUniform3f(glGetUniformLocation(lightingPipeline2.shaderProgram, "Ls"), aux_r, aux_g, aux_b)
+        glUniform3f(glGetUniformLocation(CSspotlightPipeline.shaderProgram, "La"), aux_r, aux_g, aux_b)
+        glUniform3f(glGetUniformLocation(CSspotlightPipeline.shaderProgram, "Ld"), aux_r, aux_g, aux_b)
+        glUniform3f(glGetUniformLocation(CSspotlightPipeline.shaderProgram, "Ls"), aux_r, aux_g, aux_b)
 
         # Object is barely visible at only ambient. Diffuse behavior is slightly grey. Sparkles are white
-        glUniform3f(glGetUniformLocation(lightingPipeline2.shaderProgram, "Ka"), 0.1, 0.1, 0.1)
-        glUniform3f(glGetUniformLocation(lightingPipeline2.shaderProgram, "Kd"), 1.0, 1.0, 1.0)
-        glUniform3f(glGetUniformLocation(lightingPipeline2.shaderProgram, "Ks"), 0.8, 0.8, 0.8)
+        glUniform3f(glGetUniformLocation(CSspotlightPipeline.shaderProgram, "Ka"), 0.1, 0.1, 0.1)
+        glUniform3f(glGetUniformLocation(CSspotlightPipeline.shaderProgram, "Kd"), 1.0, 1.0, 1.0)
+        glUniform3f(glGetUniformLocation(CSspotlightPipeline.shaderProgram, "Ks"), 0.8, 0.8, 0.8)
 
-        glUniform3f(glGetUniformLocation(lightingPipeline2.shaderProgram, "lightPosition"), lightposition[0], lightposition[1], lightposition[2])
-        glUniform3f(glGetUniformLocation(lightingPipeline2.shaderProgram, "viewPosition"), camera.eye[0], camera.eye[1], camera.eye[2])
-        glUniform1ui(glGetUniformLocation(lightingPipeline2.shaderProgram, "shininess"), int(shininess))
+        glUniform3f(glGetUniformLocation(CSspotlightPipeline.shaderProgram, "lightPosition"), lightposition[0], lightposition[1], lightposition[2])
+        glUniform3f(glGetUniformLocation(CSspotlightPipeline.shaderProgram, "viewPosition"), camera.eye[0], camera.eye[1], camera.eye[2])
+        glUniform1ui(glGetUniformLocation(CSspotlightPipeline.shaderProgram, "shininess"), int(shininess))
         
-        glUniform1f(glGetUniformLocation(lightingPipeline2.shaderProgram, "constantAttenuation"), cte_at)
-        glUniform1f(glGetUniformLocation(lightingPipeline2.shaderProgram, "linearAttenuation"), lnr_at)
-        glUniform1f(glGetUniformLocation(lightingPipeline2.shaderProgram, "quadraticAttenuation"), qud_at)
+        glUniform1f(glGetUniformLocation(CSspotlightPipeline.shaderProgram, "constantAttenuation"), cte_at)
+        glUniform1f(glGetUniformLocation(CSspotlightPipeline.shaderProgram, "linearAttenuation"), lnr_at)
+        glUniform1f(glGetUniformLocation(CSspotlightPipeline.shaderProgram, "quadraticAttenuation"), qud_at)
+        glUniform1f(glGetUniformLocation(CSspotlightPipeline.shaderProgram, "concentrationP"), 100.0)
+        glUniform3f(glGetUniformLocation(CSspotlightPipeline.shaderProgram, "spotDirR"), 0.0, 0.0, -3.0)
 
-        glUniformMatrix4fv(glGetUniformLocation(lightingPipeline2.shaderProgram, "projection"), 1, GL_TRUE, projection)
-        glUniformMatrix4fv(glGetUniformLocation(lightingPipeline2.shaderProgram, "view"), 1, GL_TRUE, viewMatrix)
-        glUniformMatrix4fv(glGetUniformLocation(lightingPipeline2.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
-        """
+        glUniformMatrix4fv(glGetUniformLocation(CSspotlightPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
+        glUniformMatrix4fv(glGetUniformLocation(CSspotlightPipeline.shaderProgram, "view"), 1, GL_TRUE, viewMatrix)
+        glUniformMatrix4fv(glGetUniformLocation(CSspotlightPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
+        #sg.drawSceneGraphNode(testNode, CSspotlightPipeline, "model")
 
         glUseProgram(pipeline1.shaderProgram)
         # White light in all components: ambient, diffuse and specular.
