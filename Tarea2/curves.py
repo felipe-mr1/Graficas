@@ -122,12 +122,36 @@ def evalCurveHermite(N, points):
     T0 = np.array([[points[4], points[5], 0]]).T
     T1 = np.array([[points[6], points[7], 0]]).T
 
-    B = hermiteMatrix(P0, P1, T0, T1)
+    H = hermiteMatrix(P0, P1, T0, T1)
 
     ts = np.linspace(0.0, 1.0, N)
     curve = np.ndarray(shape=(len(ts), 3), dtype=float)
 
     for i in range(len(ts)):
         T = generateT(ts[i])
-        curve[i, 0:3] = np.matmul(B, T).T
+        curve[i, 0:3] = np.matmul(H, T).T
+    return curve
+
+def evalCurveHermiteAndBezier(N, pointsH, pointsB):
+    P0 = np.array([[pointsH[0], pointsH[1], 0]]).T
+    P1 = np.array([[pointsH[2], pointsH[3], 0]]).T
+    T0 = np.array([[pointsH[4], pointsH[5], 0]]).T
+    T1 = np.array([[pointsH[6], pointsH[7], 0]]).T
+
+    Pb0=np.array([[pointsB[0], pointsB[1], 0]]).T
+    Pb1=np.array([[pointsB[2], pointsB[3], 0]]).T
+    Pb2=np.array([[pointsB[4], pointsB[5], 0]]).T
+    Pb3=np.array([[pointsB[6], pointsB[7], 0]]).T
+
+    H = hermiteMatrix(P0, P1, T0, T1)
+    B = bezierMatrix(Pb0, Pb1, Pb2, Pb3)
+
+    ts = np.linspace(0.0, 1.0, N//2)
+    curve = np.ndarray(shape=(len(ts)*2, 3), dtype=float)
+    offset = N//2
+
+    for i in range(len(ts)):
+        T = generateT(ts[i])
+        curve[i, 0:3] = np.matmul(H, T).T
+        curve[i + offset, 0:3] = np.matmul(B, T).T
     return curve

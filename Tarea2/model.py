@@ -15,7 +15,7 @@ class articulation():
         self.lastTransform = 0
 
     def move(self):
-        if self.index < len(self.curve) -4:
+        if self.index < len(self.curve) -2:
             self.index += 1
             self.pos = self.curve[self.index]
         else:

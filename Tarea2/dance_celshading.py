@@ -1,4 +1,4 @@
-from curves import evalCurveBezier, evalCurveCR, evalCurveCR9, evalCurveHermite
+from curves import evalCurveBezier, evalCurveCR, evalCurveCR9, evalCurveHermite, evalCurveHermiteAndBezier
 import glfw
 from OpenGL.GL import *
 import OpenGL.GL.shaders
@@ -165,7 +165,7 @@ class Controller:
 
         self.autoCameraView = False
 
-        self.actual_sprite = 1
+        self.fourTones = False
 
     def get_camera(self):
         return self.polar_camera
@@ -220,7 +220,9 @@ class Controller:
 
         if key == glfw.KEY_3:
             if action == glfw.PRESS:
-                self.actual_sprite += 1
+                self.fourTones = True
+            elif action == glfw.RELEASE:
+                self.fourTones = False
 
         elif key == glfw.KEY_LEFT_CONTROL:
             if action == glfw.PRESS:
@@ -289,7 +291,7 @@ if __name__ == "__main__":
 
     width = 800
     height = 800
-    title = "P0 - Scene"
+    title = "Dance - Cel Shading"
 
     window = glfw.create_window(width, height, title, None, None)
 
@@ -305,7 +307,7 @@ if __name__ == "__main__":
         0.4+0.3, 0.5, -0.3,   # 2
         0, 0.15+0.3, -0.25,   # 3
         -0.4-0.3, -0.5, -0.2, # 4
-        0, -0.8, -0.1,        # 5
+        0, -1, -0.1,          # 5
         0.4+0.3, -0.5, -0.2,  # 6
         0, 0.15+0.3, -0.2,    # 7
         -0.4-0.3, 0.5, -0.3,  # 8
@@ -323,7 +325,7 @@ if __name__ == "__main__":
     phongPipeline = sh.CelShadingPhongShaderProgram()
     phongPipeline2 = ls.SimplePhongShaderProgram()
     phongPipeline3 = ls.SimplePhongShaderProgram()
-    CSphongTexPipeline2 = sh.CelShadingTexturePhongShaderProgram2()
+    CSphongTexPipeline2 = sh.CelShading4TonesPhongShaderProgram()
     phongTexPipeline = ls.SimpleTexturePhongShaderProgram()
     CSphongTexPipeline = sh.CelShadingTexturePhongShaderProgram()
 
@@ -357,10 +359,10 @@ if __name__ == "__main__":
 
     curvepoints2 = [
         0, 0,                # 0
-        0.2, np.pi/2,        # 1
-        0.4, np.pi * (0.75), # 2
+        0.2, np.pi/2 * 0,        # 1
+        0.4, np.pi * (0.55), # 2
         0.5, np.pi/2,        # 3
-        0.6, np.pi * (0.75), # 4
+        0.6, np.pi * (0.55), # 4
         0.8, 0,              # 5
         1,0                  # 6
     ]
@@ -374,7 +376,7 @@ if __name__ == "__main__":
         0.8, -np.pi * (0.5), # 5
         1,0                  # 6
     ]
-    # CTR
+    
     curvepoints4 = [
         0, 0,                # 0
         0.2, 0,              # 1
@@ -425,40 +427,70 @@ if __name__ == "__main__":
         1,0                   # 6
     ]
 
+    curvepoints9 = [
+        0, 0,                 # 0
+        0.2, np.pi * 0.25,    # 1
+        0.4, np.pi * (0.0),   # 2
+        0.5, np.pi * (0.25),  # 3
+        0.6, np.pi * (0.10),  # 4
+        0.8, np.pi * (0.0),   # 5
+        1,0                   # 6
+    ]
+
     bezierPoints = [
-        0, 0,         # 0
+        0, 0,               # 0
         0.33, np.pi * 0.2,  # 1
-        0.66, -np.pi* 0.2, # 2
-        1, 0          # 3
+        0.66, -np.pi* 0.2,  # 2
+        1, 0                # 3
     ]
 
     bezierPoints2 = [
-        0, 0,         # 0
+        0, 0,                # 0
         0.33, np.pi * 0.25,  # 1
-        0.66, -np.pi* 0.25, # 2
-        1, 0          # 3
+        0.66, -np.pi* 0.25,  # 2
+        1, 0                 # 3
     ]
 
     hermitePoints = [
         0, 0,                # p1
         1, 0,                # p2
-        0.947, 9.13 * np.pi, # t1
-        1.243, 8.34 * np.pi  # t2
+        0.947, 4 * np.pi, # t1
+        1.243, 3 * np.pi  # t2
     ]
 
-    # Curves of Splines de catmull rom
-    curve1 = evalCurveCR(1800, curvepoints)
-    curve2 = evalCurveCR(1800, curvepoints2)
-    curve3 = evalCurveCR(1800, curvepoints3)
-    curve4 = evalCurveCR(1800, curvepoints4)
-    curve5 = evalCurveCR(1800, curvepoints5)
-    curve6 = evalCurveCR(1800, curvepoints6)
-    curve7 = evalCurveCR(900, curvepoints7)
-    curve8 = evalCurveCR(900, curvepoints8)
+    curvepoints10 = [
+        -0.2, -np.pi * 2, 0,      # 0
+        0, 0, 0,                  # 1
+        0.1, np.pi * .2, 0,       # 2
+        0.2, -np.pi * .2, 0,      # 3
+        0.4, np.pi * .2, 0,       # 4
+        0.5, -np.pi * .2, 0,      # 5
+        0.6, np.pi * .2, 0,       # 6
+        0.7, -np.pi * .2, 0,      # 7
+        0.8, np.pi * .2, 0,       # 8
+        1.0, 0, 0,                # 9
+        0.2, np.pi * 2, 0         # 10
+    ]
+
+    # Creacion de varios tipos de curvas
+    # Contempla Catmull-Rom, Bezier y Hermite
+    # La cantidad de puntos determina la velocidad
+    # a la cual las articulaciones se moveran
+    curve1 = evalCurveCR(800, curvepoints) # 1800  |  400
+    curve2 = evalCurveCR(800, curvepoints2)
+    curve3 = evalCurveCR(800, curvepoints3)
+    curve4 = evalCurveCR(800, curvepoints4)
+    curve5 = evalCurveCR(800, curvepoints5)
+    curve6 = evalCurveCR(800, curvepoints6)
+    curve7 = evalCurveCR(500, curvepoints7) # 900
+    curve8 = evalCurveCR(800, curvepoints8)
+    curve9 = evalCurveCR(500, curvepoints9)
+    curve10 = evalCurveCR9(800, curvepoints10)
     cameraCurve = evalCurveCR9(1800, cameraPoints)
-    bezierCurve = evalCurveBezier(1800, bezierPoints)
-    bezierCurve2 = evalCurveBezier(1800, bezierPoints2)
+    bezierCurve = evalCurveBezier(800, bezierPoints)
+    bezierCurve2 = evalCurveBezier(800, bezierPoints2)
     hermiteCurve = evalCurveHermite(1800, hermitePoints)
+    mixedCurve = evalCurveHermiteAndBezier(800, hermitePoints, bezierPoints)
 
     Torus = createTextureGPUShapeX(createTextureTorus(50), CSphongTexPipeline, 
     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR, GL_NEAREST, 'sprites/metal.png')
@@ -484,8 +516,12 @@ if __name__ == "__main__":
     pipeline1.setupVAO(gpuSphere)
     gpuSphere.fillBuffers(sphereMesh_vertices, sphereMesh_indices, GL_STATIC_DRAW)
 
-    sphereNode = sg.SceneGraphNode("asd")
+    sphereNode = sg.SceneGraphNode("sphereMeshRot")
     sphereNode.childs = [gpuSphere]
+
+    sphereNodeLoc = sg.SceneGraphNode("sphereMesh")
+    sphereNodeLoc.transform = tr.matmul([tr.translate(2.0, -2.0, -2.0)])
+    sphereNodeLoc.childs = [sphereNode]
 
     toraxShape = createTorax()
     gpuTorax = es.GPUShape().initBuffers()
@@ -496,6 +532,11 @@ if __name__ == "__main__":
     toraxNode = sg.SceneGraphNode("torax")
     toraxNode.transform = tr.matmul([tr.translate(0.0, -0.4, -0.4 - (0.4)),tr.rotationZ((3/2) *np.pi)]) # y,z -.4
     toraxNode.childs = [gpuTorax]
+
+    hangerShape = hanger()
+    gpuHanger = es.GPUShape().initBuffers()
+    mvpPipeline.setupVAO(gpuHanger)
+    gpuHanger.fillBuffers(hangerShape.vertices, hangerShape.indices, GL_STATIC_DRAW)
 
     screenShape = s3d.createTextureNormalsCube(2,2)
     gpuScreen = es.GPUShape().initBuffers() 
@@ -510,7 +551,7 @@ if __name__ == "__main__":
 
     gpuScreen2 = copy.deepcopy(gpuScreen)
     CSphongTexPipeline.setupVAO(gpuScreen2)
-    gpuScreen2.texture = es.textureSimpleSetup("sprites/metal.png", GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_NEAREST)
+    gpuScreen2.texture = es.textureSimpleSetup("sprites/lavalamp.jpg", GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, GL_NEAREST)
     gpuScreen2.fillBuffers(screenShape.vertices, screenShape.indices, GL_STATIC_DRAW)
     glGenerateMipmap(GL_TEXTURE_2D)
 
@@ -525,8 +566,8 @@ if __name__ == "__main__":
     s = t0
 
     # initilize imgui context (see documentation)
-    imgui.create_context()
-    impl = GlfwRenderer(window)
+    #imgui.create_context()
+    #impl = GlfwRenderer(window)
 
     
     controller = Controller(cameraCurve)
@@ -549,11 +590,16 @@ if __name__ == "__main__":
 
     finalTransform = [0,-0.4, -0.4]
 
+    # Set de curvas que las articulaciones van a utilizar
     setOfCurvesLA = [curve1,curve3, curve5 ,curve7]
     setOfCurvesRA = [curve1,curve4, curve6,curve7]
     setOfCurvesLFA = [curve2,curve3, curve5 ,curve7]
     setOfCurvesRFA = [curve2,curve4, curve6 ,curve7]
-    setOfCurvesRL = [curve8, bezierCurve, bezierCurve2, curve7]
+    setOfCurvesRL = [curve8, bezierCurve, bezierCurve2, curve9]
+    setOfCurvesHR = [curve10, curve10, curve10, curve10]
+    setOfCurvesMixed = [mixedCurve, mixedCurve, mixedCurve, mixedCurve]
+
+    # Busqueda de Nodods y creacion de articulaciones
 
     leftArm = sg.findNode(body, "leftArmRot")
     leftArmArticulation = articulation(setOfCurvesLA)
@@ -575,6 +621,14 @@ if __name__ == "__main__":
     rightLegArticulation = articulation(setOfCurvesRL)
     rightLegArticulation.set_model(rightLeg1)
 
+    headNode = sg.findNode(body, "headRotation")
+    headArticulation = articulation(setOfCurvesHR)
+    headArticulation.set_model(headNode)
+
+    leftLeg1 = sg.findNode(body, "leftLegRot")
+    leftLegArticulation = articulation(setOfCurvesMixed)
+    leftLegArticulation.set_model(leftLeg1)
+
     # Application loop
     while not glfw.window_should_close(window):
         # Variables del tiempo
@@ -585,7 +639,7 @@ if __name__ == "__main__":
         t0 = t1
 
         
-        impl.process_inputs()
+        #impl.process_inputs()
         # Using GLFW to check for input events
         glfw.poll_events()
 
@@ -601,8 +655,8 @@ if __name__ == "__main__":
 
          # imgui function
 
-        locationZ, la, ld, ls, cte_at, lnr_at, qud_at, shininess = \
-            transformGuiOverlay(locationZ, la, ld, ls, cte_at, lnr_at, qud_at, shininess)
+        #locationZ, la, ld, ls, cte_at, lnr_at, qud_at, shininess = \
+            #transformGuiOverlay(locationZ, la, ld, ls, cte_at, lnr_at, qud_at, shininess)
 
         # Filling or not the shapes depending on the controller state
         if (controller.fillPolygon):
@@ -621,8 +675,11 @@ if __name__ == "__main__":
             glUseProgram(mvpPipeline.shaderProgram)
             glUniformMatrix4fv(glGetUniformLocation(mvpPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
             glUniformMatrix4fv(glGetUniformLocation(mvpPipeline.shaderProgram, "view"), 1, GL_TRUE, viewMatrix)
-            glUniformMatrix4fv(glGetUniformLocation(mvpPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
-            mvpPipeline.drawCall(gpuAxis, GL_LINES)
+            #glUniformMatrix4fv(glGetUniformLocation(mvpPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
+            glUniformMatrix4fv(glGetUniformLocation(mvpPipeline.shaderProgram, "model"), 1, GL_TRUE,
+             tr.matmul([tr.translate(0, -2.3, 0),tr.rotationX(np.pi/2), tr.uniformScale(0.5)])) # tr.identity
+            #mvpPipeline.drawCall(gpuAxis, GL_LINES)
+            mvpPipeline.drawCall(gpuHanger, GL_LINES)
 
         lightingPipeline = phongPipeline
         lightingPipeline2 = phongPipeline2
@@ -636,6 +693,8 @@ if __name__ == "__main__":
         elif controller.lightingModel == LIGHT_PHONG:
             lightingPipeline = phongPipeline3
             texPipeline = phongTexPipeline
+        if controller.fourTones == True:
+            lightingPipeline = CSphongTexPipeline2
 
 
         r = 1.0
@@ -672,6 +731,10 @@ if __name__ == "__main__":
         rightArmArticulation.update()
         rightLegArticulation.move()
         rightLegArticulation.update()
+        headArticulation.move()
+        headArticulation.update()
+        leftLegArticulation.move()
+        leftLegArticulation.update()
 
         glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "La"), aux_r, aux_g, aux_b)
         glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Ld"), aux_r, aux_g, aux_b)
@@ -680,7 +743,7 @@ if __name__ == "__main__":
         # Object is barely visible at only ambient. Diffuse behavior is slightly red. Sparkles are white
         glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Ka"), 0.2, 0.2, 0.2)
         glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Kd"), 0.5, 0.5, 0.5)
-        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Ks"), 0.5, 0.5, 0.5)
+        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "Ks"), 0.3, 0.3, 0.3)
 
         glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "lightPosition"), lightposition[0], lightposition[1], lightposition[2])
         glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "viewPosition"), camera.eye[0], camera.eye[1], camera.eye[2])
@@ -715,7 +778,7 @@ if __name__ == "__main__":
         glUniform1f(glGetUniformLocation(texPipeline.shaderProgram, "quadraticAttenuation"), qud_at)
         
         glUniform3f(glGetUniformLocation(texPipeline.shaderProgram, "Ka"), 0.2, 0.2, 0.2)
-        glUniform3f(glGetUniformLocation(texPipeline.shaderProgram, "Kd"), 0.5, 0.5, 0.5)
+        glUniform3f(glGetUniformLocation(texPipeline.shaderProgram, "Kd"), 0.8, 0.8, 0.8)
         glUniform3f(glGetUniformLocation(texPipeline.shaderProgram, "Ks"), 1.0, 1.0, 1.0)
 
         glUniformMatrix4fv(glGetUniformLocation(texPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
@@ -732,13 +795,14 @@ if __name__ == "__main__":
 
         sg.drawSceneGraphNode(torusNode, texPipeline, "model")
 
+        """
         glUseProgram(lightingPipeline2.shaderProgram)
-        # White light in all components: ambient, diffuse and specular.
+        # Light in all components: ambient, diffuse and specular.
         glUniform3f(glGetUniformLocation(lightingPipeline2.shaderProgram, "La"), aux_r, aux_g, aux_b)
         glUniform3f(glGetUniformLocation(lightingPipeline2.shaderProgram, "Ld"), aux_r, aux_g, aux_b)
         glUniform3f(glGetUniformLocation(lightingPipeline2.shaderProgram, "Ls"), aux_r, aux_g, aux_b)
 
-        # Object is barely visible at only ambient. Diffuse behavior is slightly red. Sparkles are white
+        # Object is barely visible at only ambient. Diffuse behavior is slightly grey. Sparkles are white
         glUniform3f(glGetUniformLocation(lightingPipeline2.shaderProgram, "Ka"), 0.1, 0.1, 0.1)
         glUniform3f(glGetUniformLocation(lightingPipeline2.shaderProgram, "Kd"), 1.0, 1.0, 1.0)
         glUniform3f(glGetUniformLocation(lightingPipeline2.shaderProgram, "Ks"), 0.8, 0.8, 0.8)
@@ -754,18 +818,41 @@ if __name__ == "__main__":
         glUniformMatrix4fv(glGetUniformLocation(lightingPipeline2.shaderProgram, "projection"), 1, GL_TRUE, projection)
         glUniformMatrix4fv(glGetUniformLocation(lightingPipeline2.shaderProgram, "view"), 1, GL_TRUE, viewMatrix)
         glUniformMatrix4fv(glGetUniformLocation(lightingPipeline2.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
+        """
 
-        #sg.drawSceneGraphNode(torus3, lightingPipeline2, "model")
+        glUseProgram(pipeline1.shaderProgram)
+        # White light in all components: ambient, diffuse and specular.
+        glUniform3f(glGetUniformLocation(pipeline1.shaderProgram, "La"), aux_r, aux_g, aux_b)
+        glUniform3f(glGetUniformLocation(pipeline1.shaderProgram, "Ld"), aux_r, aux_g, aux_b)
+        glUniform3f(glGetUniformLocation(pipeline1.shaderProgram, "Ls"), aux_r, aux_g, aux_b)
+
+        # Object is barely visible at only ambient. Diffuse behavior is slightly red. Sparkles are white
+        glUniform3f(glGetUniformLocation(pipeline1.shaderProgram, "Ka"), 0.1, 0.1, 0.1)
+        glUniform3f(glGetUniformLocation(pipeline1.shaderProgram, "Kd"), 1.0, 1.0, 1.0)
+        glUniform3f(glGetUniformLocation(pipeline1.shaderProgram, "Ks"), 0.9, 0.9, 0.9)
+
+        glUniform3f(glGetUniformLocation(pipeline1.shaderProgram, "lightPosition"), lightposition[0], lightposition[1], lightposition[2])
+        glUniform3f(glGetUniformLocation(pipeline1.shaderProgram, "viewPosition"), camera.eye[0], camera.eye[1], camera.eye[2])
+        glUniform1ui(glGetUniformLocation(pipeline1.shaderProgram, "shininess"), int(shininess))
+        
+        glUniform1f(glGetUniformLocation(pipeline1.shaderProgram, "constantAttenuation"), cte_at)
+        glUniform1f(glGetUniformLocation(pipeline1.shaderProgram, "linearAttenuation"), lnr_at)
+        glUniform1f(glGetUniformLocation(pipeline1.shaderProgram, "quadraticAttenuation"), qud_at)
+
+        glUniformMatrix4fv(glGetUniformLocation(pipeline1.shaderProgram, "projection"), 1, GL_TRUE, projection)
+        glUniformMatrix4fv(glGetUniformLocation(pipeline1.shaderProgram, "view"), 1, GL_TRUE, viewMatrix)
+        glUniformMatrix4fv(glGetUniformLocation(pipeline1.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
+        sg.drawSceneGraphNode(sphereNodeLoc, pipeline1,"model")
         
         # Drawing the imgui texture over our drawing
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
-        impl.render(imgui.get_draw_data())
+        #impl.render(imgui.get_draw_data())
 
         # Once the drawing is rendered, buffers are swap so an uncomplete drawing is never seen.
         glfw.swap_buffers(window)
 
     gpuAxis.clear()
-    impl.shutdown()
+    #impl.shutdown()
     scene.clear()
     #cube1.clear()
     #cube2.clear()
@@ -775,5 +862,6 @@ if __name__ == "__main__":
     dababy.clear()
     sphereNode.clear()
     toraxNode.clear()
+    body.clear()
 
     glfw.terminate()

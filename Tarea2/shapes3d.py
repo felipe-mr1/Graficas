@@ -238,7 +238,7 @@ def createBodyScene2(pipeline, babyNode):
     leftShoulder.childs = [articulationShape]
 
     leftArmPart = sg.SceneGraphNode("leftArmPart")
-    leftArmPart.transform = tr.matmul([tr.translate(0.0,0,-0.15) ,tr.scale(0.1,0.1,0.4)])
+    leftArmPart.transform = tr.matmul([tr.translate(0.0,0,-0.2) ,tr.scale(0.1,0.1,0.4)])
     leftArmPart.childs = [gpuGrayCube]
     
     leftElbowPart = sg.SceneGraphNode("leftElbowPart")
@@ -248,7 +248,7 @@ def createBodyScene2(pipeline, babyNode):
     leftLowerPart = sg.SceneGraphNode("leftLowerPart")
     leftLowerPart.transform = tr.matmul([tr.translate(0.0,0,-0.15) ,tr.scale(0.1,0.1,0.2)])
     leftLowerPart.childs = [gpuGrayCube]
-    # deberia hacer un leftForearmNode aqui antes de rot o dsps o nada?????????????????
+
     leftForearmRot = sg.SceneGraphNode("leftForearmRot")
     leftForearmRot.childs = [leftElbowPart, leftLowerPart]
 
@@ -270,7 +270,7 @@ def createBodyScene2(pipeline, babyNode):
     rightShoulder.childs = [articulationShape]
 
     rightArmPart = sg.SceneGraphNode("rightArmPart")
-    rightArmPart.transform = tr.matmul([tr.translate(0.0,0,-0.15) ,tr.scale(0.1,0.1,0.4)])
+    rightArmPart.transform = tr.matmul([tr.translate(0.0,0,-0.2) ,tr.scale(0.1,0.1,0.4)])
     rightArmPart.childs = [gpuGrayCube]
     
     rightElbowPart = sg.SceneGraphNode("rightElbowPart")
@@ -280,7 +280,7 @@ def createBodyScene2(pipeline, babyNode):
     rightLowerPart = sg.SceneGraphNode("rightLowerPart")
     rightLowerPart.transform = tr.matmul([tr.translate(0.0,0,-0.15) ,tr.scale(0.1,0.1,0.2)])
     rightLowerPart.childs = [gpuGrayCube]
-    # deberia hacer un leftForearmNode aqui antes de rot o dsps o nada?????????????????
+
     rightForearmRot = sg.SceneGraphNode("rightForearmRot")
     rightForearmRot.childs = [rightElbowPart, rightLowerPart]
 
@@ -334,13 +334,28 @@ def createBodyScene2(pipeline, babyNode):
     extremidades = sg.SceneGraphNode("extremidades")
     extremidades.childs = [leftArm, rightArm, leftLeg, rightLeg]
 
+    headNode = sg.SceneGraphNode("headNode")
+    headNode.transform = tr.translate(0, 0, 0.0)
+    headNode.childs = [neckNode, babyNode]
+
     headRotationNode = sg.SceneGraphNode("headRotation")
-    headRotationNode.childs=[neckNode, babyNode]
+    headRotationNode.childs=[headNode]
 
     wholeBody = sg.SceneGraphNode("wholeBody")
     wholeBody.childs = [extremidades, headRotationNode]
 
     return wholeBody
+
+def hanger():
+    vertices = [
+        0, 0.5, 0, 1, 1, 1,       # 0
+        -0.5, -0.5, 0, 1, 1, 1,   # 1
+        0.5, -0.5, 0, 1, 1, 1,    # 2
+        -0.7, 0, 0, 1, 1, 1,      # 3
+        0.7, 0, 0, 1, 1, 1        # 4
+    ]
+    indices = [1,0, 2, 3, 2, 0, 4, 3, 4, 1]
+    return bs.Shape(vertices, indices)
 
 def createCube1(pipeline):
     gpuGrayCube = createGPUShape(pipeline, bs.createColorNormalsCube(0.5, 0.5, 0.5))
@@ -387,21 +402,21 @@ def createLineTriangle():
 
 def createTorax():
     vertices = [
-        0.2, -0.3, 0.4, 0.33, 0.0, 1, -1, 1, # 0
-        0.2, 0.3, 0.4, 0.66, 0.0, 1, 1, 1, # 1
-        -0.2, 0.3, 0.4, 1, 0.0, -1, 1, 1, # 2
-        -0.2, -0.3, 0.4, 0, 0, -1, -1, 1, # 3
-        0.25, 0.0, 0.4, 0.5, 0, 1, 1, 1, # 4
+        0.2, -0.3, 0.4, 0.33, 0.0, 1, -1, 1,  # 0
+        0.2, 0.3, 0.4, 0.66, 0.0, 1, 1, 1,    # 1
+        -0.2, 0.3, 0.4, 1, 0.0, -1, 1, 1,     # 2
+        -0.2, -0.3, 0.4, 0, 0, -1, -1, 1,     # 3
+        0.25, 0.0, 0.4, 0.5, 0, 1, 1, 1,      # 4
 
-        0.15, -0.2, 0.0, 0.2, 0.8, 1, -1, 0, # 5
-        0.15, 0.2, 0.0, 0.8, 0.8, 1, 1, 0, # 6
-        -0.15, 0.2, 0.0, 1, 0.8, -1, 1, 0, # 7
-        -0.15, -0.2, 0.0, 0, 0.8, -1, -1, 0, # 8
+        0.15, -0.2, 0.0, 0.2, 0.8, 1, -1, 0,  # 5
+        0.15, 0.2, 0.0, 0.8, 0.8, 1, 1, 0,    # 6
+        -0.15, 0.2, 0.0, 1, 0.8, -1, 1, 0,    # 7
+        -0.15, -0.2, 0.0, 0, 0.8, -1, -1, 0,  # 8
 
         0.1, -0.15, -0.4, 0.33, 1, 1, -1, -1, # 9
-        0.1, 0.15, -0.4, 0.66, 1, 1, 1, -1, # 10
-        -0.1, 0.15, -0.4, 1, 1, -1, 1, -1, # 11
-        -0.1, -0.15, -0.4, 0, 1, -1, -1, -1 # 12
+        0.1, 0.15, -0.4, 0.66, 1, 1, 1, -1,   # 10
+        -0.1, 0.15, -0.4, 1, 1, -1, 1, -1,    # 11
+        -0.1, -0.15, -0.4, 0, 1, -1, -1, -1   # 12
     ]
     indices = [
         0,1,2,
