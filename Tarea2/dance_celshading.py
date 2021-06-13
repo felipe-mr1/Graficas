@@ -514,7 +514,6 @@ if __name__ == "__main__":
     dababy.transform = tr.matmul([tr.translate(0,0,0.0),tr.rotationZ(np.pi),tr.uniformScale(0.025)])
     dababy.childs = [gpuBaby]
 
-    #body = createBodyScene(phongPipeline, dababy)
     body = createBodyScene2(phongPipeline, dababy)
     body.transform = tr.translate(0,-0.4,-0.4)
 
