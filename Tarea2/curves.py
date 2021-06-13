@@ -1,5 +1,8 @@
 import numpy as np
 
+# file that contains all the functions
+# to generate the curves: CatMullRom, Bezier & Hermite
+
 def CatMullRom(P0, P1, P2, P3):
     G = np.concatenate((P0, P1, P2, P3), axis=1)
     M_CR = np.array([[0, -1/2, 2/2, -1/2],

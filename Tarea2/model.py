@@ -5,6 +5,9 @@ import numpy as np
 import random as rd
 import grafica.transformations as tr
 
+# class for each articulation
+# works with the curves and model given
+# in charge of the movement of each model
 class articulation():
     def __init__(self, aSetOfCurves):
         self.curve = aSetOfCurves[0]

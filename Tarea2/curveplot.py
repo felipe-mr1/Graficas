@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pyplot as mpl
 from mpl_toolkits.mplot3d import Axes3D
 
+# file to plot and visualize some curves
+
 def plotCurve(ax, curve, label, color=(0,0,1)):
     
     xs = curve[:, 0]

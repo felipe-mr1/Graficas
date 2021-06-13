@@ -20,6 +20,7 @@ def createGPUShape(pipeline, shape):
     gpuShape.fillBuffers(shape.vertices, shape.indices, GL_STATIC_DRAW)
     return gpuShape
 
+# Convenience function to ease initialization
 def createTextureGPUShape(shape, pipeline, path):
     # Funcion Conveniente para facilitar la inicializacion de un GPUShape con texturas
     gpuShape = es.GPUShape().initBuffers()
@@ -29,6 +30,7 @@ def createTextureGPUShape(shape, pipeline, path):
         path, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST)
     return gpuShape
 
+# Convenience function to ease initialization
 def createTextureGPUShapeX(shape, pipeline,sWrapMode, tWrapMode, minFilterMode, maxFilterMode, path):
     # Funcion Conveniente para facilitar la inicializacion de un GPUShape con texturas
     gpuShape = es.GPUShape().initBuffers()
@@ -39,6 +41,8 @@ def createTextureGPUShapeX(shape, pipeline,sWrapMode, tWrapMode, minFilterMode, 
     glGenerateMipmap(GL_TEXTURE_2D)
     return gpuShape
 
+# creates the scene where the dance takes place
+# returns sceneGraphNode
 def createScene(pipeline):
 
     gpuRedCube = createGPUShape(pipeline, bs.createColorNormalsCube(1, 0, 0))
@@ -91,6 +95,8 @@ def createScene(pipeline):
 
     return trSceneNode
 
+# creates a shape of a quad with a texture
+# returns a Shape
 def createTextureQuad(nx, ny):
 
     # Defining locations and texture coordinates for each vertex of the shape    
@@ -109,120 +115,8 @@ def createTextureQuad(nx, ny):
 
     return bs.Shape(vertices, indices)
 
-def createDanceScene(pipeline):
-    quad = createTextureQuad(1,1)
-    gpuLeftRightWall = createGPUShape(pipeline, quad)
-    gpuLeftRightWall.texture = es.textureSimpleSetup(
-        "sprites/dancing3.png", GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR) # o linear??
-
-    gpuBackWall = copy.deepcopy(gpuLeftRightWall)
-    gpuBackWall.texture = es.textureSimpleSetup(
-        "sprites/dancing2.png", GL_REPEAT, GL_REPEAT, GL_LINEAR, GL_LINEAR)
-
-    leftWall = sg.SceneGraphNode("leftWall")
-    leftWall.transform = tr.matmul([tr.translate(-2.49, 0, 0),tr.rotationX(np.pi/2),tr.rotationY(np.pi/2),tr.uniformScale(5.0)])
-    leftWall.childs = [gpuLeftRightWall]
-    rightWall = sg.SceneGraphNode("rightWall")
-    rightWall.transform = tr.matmul([tr.translate(2.49, 0, 0),tr.rotationX(np.pi/2),tr.rotationY(np.pi/2),tr.uniformScale(5.0)])
-    rightWall.childs = [gpuLeftRightWall]
-    backWall = sg.SceneGraphNode("backWall")
-    backWall.transform = tr.matmul([tr.translate(0.0, -2.6, 0),tr.rotationX(np.pi/2),tr.uniformScale(5.0)])
-    backWall.childs = [gpuBackWall]
-
-    walls = sg.SceneGraphNode("Walls")
-    walls.childs = [leftWall, rightWall, backWall]
-
-    return walls
-
-def createBodyScene(pipeline, babyNode):
-    gpuGrayCube = createGPUShape(pipeline, bs.createColorNormalsCube(0.7, 0.7, 0.7))
-    articulationShape = createGPUShape(pipeline, createColorNormalSphere(64, 0.4, 0.4, 0.4))
-    
-    neckNode = sg.SceneGraphNode("neck")
-    neckNode.transform = tr.matmul([tr.uniformScale(0.15)])
-    neckNode.childs = [articulationShape]
-
-    leftShoulder = sg.SceneGraphNode("leftShoulder")
-    leftShoulder.transform = tr.matmul([tr.translate(-0.3,0,0.0) ,tr.uniformScale(0.15)])
-    leftShoulder.childs = [articulationShape]
-
-    leftArmPart = sg.SceneGraphNode("leftArmPart")
-    leftArmPart.transform = tr.matmul([tr.translate(-0.4,0,-0.15) ,tr.scale(0.1,0.1,0.4)])
-    leftArmPart.childs = [gpuGrayCube]
-
-    leftElbowPart = sg.SceneGraphNode("leftElbowPart")
-    leftElbowPart.transform = tr.matmul([tr.translate(-0.4,0,-0.4) ,tr.uniformScale(0.15)])
-    leftElbowPart.childs = [articulationShape]
-
-    leftLowerPart = sg.SceneGraphNode("leftLowerPart")
-    leftLowerPart.transform = tr.matmul([tr.translate(-0.4,0,-0.55) ,tr.scale(0.1,0.1,0.2)])
-    leftLowerPart.childs = [gpuGrayCube]
-
-    leftForearm = sg.SceneGraphNode("leftForearm") # Agragar la mano
-    leftForearm.childs = [leftElbowPart, leftLowerPart]
-
-    leftArm = sg.SceneGraphNode("leftArm")
-    leftArm.childs = [leftShoulder, leftArmPart, leftForearm]
-
-    rightShoulder = sg.SceneGraphNode("rightShoulder")
-    rightShoulder.transform = tr.matmul([tr.translate(0.3,0,0.0) ,tr.uniformScale(0.15)])
-    rightShoulder.childs = [articulationShape]
-
-    rightArmPart = sg.SceneGraphNode("rightArmPart")
-    rightArmPart.transform = tr.matmul([tr.translate(0.4,0,-0.15) ,tr.scale(0.1,0.1,0.4)])
-    rightArmPart.childs = [gpuGrayCube]
-
-    rightElbowPart = sg.SceneGraphNode("rigthElbowPart")
-    rightElbowPart.transform = tr.matmul([tr.translate(0.4,0,-0.4) ,tr.uniformScale(0.15)])
-    rightElbowPart.childs = [articulationShape]
-
-    rightLowerPart = sg.SceneGraphNode("rightLowerPart")
-    rightLowerPart.transform = tr.matmul([tr.translate(0.4,0,-0.55) ,tr.scale(0.1,0.1,0.2)])
-    rightLowerPart.childs = [gpuGrayCube]
-
-    rightForearm = sg.SceneGraphNode("rightForearm") # Agragar la mano
-    rightForearm.childs = [rightElbowPart, rightLowerPart]
-
-    rightArm = sg.SceneGraphNode("rightArm")
-    rightArm.childs = [rightShoulder, rightArmPart, rightForearm]
-
-    leftSomething = sg.SceneGraphNode("leftSomething")
-    leftSomething.transform = tr.matmul([tr.translate(-0.2,0.0,-0.7) ,tr.uniformScale(0.15)])
-    leftSomething.childs = [articulationShape]
-
-    leftLegPart = sg.SceneGraphNode("leftLegPart")
-    leftLegPart.transform = tr.matmul([tr.translate(-0.3,0,-1.0) ,tr.scale(0.1,0.1,0.6)])
-    leftLegPart.childs = [gpuGrayCube]
-
-    leftLeg = sg.SceneGraphNode("leftLeg")
-    leftLeg.childs = [leftSomething, leftLegPart]
-
-    rightSomething = sg.SceneGraphNode("leftSomething")
-    rightSomething.transform = tr.matmul([tr.translate(0.2,0,-0.7) ,tr.uniformScale(0.15)])
-    rightSomething.childs = [articulationShape]
-
-    rightLegPart = sg.SceneGraphNode("leftLegPart")
-    rightLegPart.transform = tr.matmul([tr.translate(0.3,0,-1.0) ,tr.scale(0.1,0.1,0.6)])
-    rightLegPart.childs = [gpuGrayCube]
-
-    rightLeg = sg.SceneGraphNode("rightLeg")
-    rightLeg.childs = [rightSomething, rightLegPart]
-
-    rightLegRot = sg.SceneGraphNode("rightLegRot")
-    rightLegRot.transform = tr.translate(0,-0.0,-0.0)
-    rightLegRot.childs = [rightLeg]
-
-    extremidades = sg.SceneGraphNode("extremidades")
-    extremidades.childs = [leftArm, rightArm, leftLeg, rightLegRot]
-
-    headRotationNode = sg.SceneGraphNode("headRotation")
-    headRotationNode.childs=[neckNode, babyNode]
-
-    wholeBody = sg.SceneGraphNode("wholeBody")
-    wholeBody.childs = [extremidades, headRotationNode]
-
-    return wholeBody
-
+# creates the body that will be dancing
+# return a sceneGraphNode
 def createBodyScene2(pipeline, babyNode):
     gpuGrayCube = createGPUShape(pipeline, bs.createColorNormalsCube(0.7, 0.7, 0.7))
     articulationShape = createGPUShape(pipeline, createColorNormalSphere(64, 0.4, 0.4, 0.4))
@@ -346,6 +240,8 @@ def createBodyScene2(pipeline, babyNode):
 
     return wholeBody
 
+# creates the shape of a STAR, dont mind the name
+# returns a Shape
 def hanger():
     vertices = [
         0, 0.5, 0, 1, 1, 1,       # 0
@@ -357,6 +253,8 @@ def hanger():
     indices = [1,0, 2, 3, 2, 0, 4, 3, 4, 1]
     return bs.Shape(vertices, indices)
 
+# creates a node with a cube and its transformations
+# returns a sceneGraphNode
 def createCube1(pipeline):
     gpuGrayCube = createGPUShape(pipeline, bs.createColorNormalsCube(0.5, 0.5, 0.5))
 
@@ -377,6 +275,8 @@ def createCube1(pipeline):
 
     return scaledObject
 
+# creates a node with a cube and its transformations
+# returns a sceneGraphNode
 def createCube2(pipeline):
     gpuGrayCube = createGPUShape(pipeline, bs.createColorNormalsCube(0.5, 0.5, 0.5))
 
@@ -397,9 +297,8 @@ def createCube2(pipeline):
 
     return scaledObject
 
-def createLineTriangle():
-    return
-
+# creates the shape of the central part of the body
+# returns a Shape with textures
 def createTorax():
     vertices = [
         0.2, -0.3, 0.4, 0.33, 0.0, 1, -1, 1,  # 0
@@ -444,6 +343,8 @@ def createTorax():
     ]
     return bs.Shape(vertices, indices)
 
+# creates a shape of a sphere
+# returns a Shape 
 def createColorNormalSphere(N, red, g, b):
 
     vertices = []
@@ -495,6 +396,8 @@ def createColorNormalSphere(N, red, g, b):
                 c += 4
     return bs.Shape(vertices, indices)
 
+# creates the mesh of a Sphere
+# returns a Mesh
 def createSphereMesh(N,r,g,b):
     dTheta = 2 * np.pi /N
     dPhi = 2 * np.pi /N
@@ -541,6 +444,8 @@ def createSphereMesh(N,r,g,b):
                 sphereMesh.add_face(vh2, vh3, vh0)
     return sphereMesh
 
+# get function to the vertexes and indexes of a mesh
+# returns a list
 def get_vertexs_and_indexes(mesh, color):
     # Obtenemos las caras de la malla
     faces = mesh.faces()
@@ -599,6 +504,8 @@ def get_vertexs_and_indexes(mesh, color):
 
     return vertexs, indexes
 
+# creates a shape of sphere with textures
+# returns a Shape
 def createTextureNormalSphere(N):
     vertices = []
     indices = []
@@ -649,6 +556,8 @@ def createTextureNormalSphere(N):
                 c += 4
     return bs.Shape(vertices, indices)
 
+# creates the shape of a torus
+# returns a Shape
 def createColorTorus(N):
     vertices = []
     indices = []
@@ -682,6 +591,8 @@ def createColorTorus(N):
     
     return bs.Shape(vertices, indices)
 
+# creates the shape of a torus with textures
+# returns a Shape
 def createTextureTorus(N):
     vertices = []
     indices = []
@@ -715,6 +626,8 @@ def createTextureTorus(N):
     
     return bs.Shape(vertices, indices)
 
+# creates the shape of a cube with normals and textures
+# returns a Shape
 def createTextureNormalsCube(nx, ny):
 
     # Defining locations,texture coordinates and normals for each vertex of the shape  
@@ -765,7 +678,8 @@ def createTextureNormalsCube(nx, ny):
 
     return bs.Shape(vertices, indices)
 
-
+# creates a node for the sphere mesh
+# returns a sceneGraphNode
 def createSphMshNode(pipeline):
     sphereMesh = createSphereMesh(64,0,0,0)
     sphereMesh_vertices, sphereMesh_indices = get_vertexs_and_indexes(sphereMesh)
@@ -784,7 +698,9 @@ def createSphMshNode(pipeline):
     sphRotation.childs = [sphMshNode]
 
     return sphRotation
-    
+
+# creates a node of a sphere
+# returns a Node  
 def createSphereNode(r, g, b, pipeline):
     sphere = createGPUShape(pipeline, createColorNormalSphere(20, r,g,b))
 
@@ -801,6 +717,8 @@ def createSphereNode(r, g, b, pipeline):
 
     return scaledSphere
 
+# creates a node of a sphere with textures
+# returns a sceneGraphNode
 def createTexSphereNode(pipeline):
     sphere = createTextureGPUShape(createTextureNormalSphere(20), pipeline, "sprites/stone.png")
 
@@ -817,6 +735,8 @@ def createTexSphereNode(pipeline):
 
     return scaledSphere
 
+# creates a node of a torus
+# returns a sceneGraphNode
 def createTorusNode(pipeline, num = 0.0):
     torus = createGPUShape(pipeline,createColorTorus(20))
 
@@ -833,6 +753,8 @@ def createTorusNode(pipeline, num = 0.0):
 
     return scaledTorus
 
+# creates a node of torus with textures
+# returns a sceneGraphNode
 def createTexTorusNode(pipeline, num = 0.0):
     torus = createTextureGPUShape(createTextureTorus(20), pipeline, "sprites/stone.png")
 
