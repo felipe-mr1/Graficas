@@ -379,151 +379,6 @@ if __name__ == "__main__":
     glEnable(GL_BLEND)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
     
-    # Puntos para la curvas
-    curvepoints = [
-        0, -np.pi/2,    # 0
-        0.2, 0,         # 1
-        0.4, np.pi/2,   # 2
-        0.5, np.pi,     # 3
-        0.6, np.pi/2,   # 4
-        0.8, np.pi,     # 5
-        1,0             # 6
-    ]
-
-    curvepoints2 = [
-        0, 0,                # 0
-        0.2, np.pi/2 * 0,        # 1
-        0.4, np.pi * (0.55), # 2
-        0.5, np.pi/2,        # 3
-        0.6, np.pi * (0.55), # 4
-        0.8, 0,              # 5
-        1,0                  # 6
-    ]
-
-    curvepoints3 = [
-        0, -np.pi/2,         # 0
-        0.2, 0,              # 1
-        0.4, -np.pi * (0.75),# 2
-        0.5, -np.pi * (0.25),# 3
-        0.6, -np.pi * (0.75),# 4
-        0.8, -np.pi * (0.5), # 5
-        1,0                  # 6
-    ]
-    
-    curvepoints4 = [
-        0, 0,                # 0
-        0.2, 0,              # 1
-        0.4, np.pi * (0.75), # 2
-        0.5, np.pi * (0.25), # 3
-        0.6, np.pi * (0.75), # 4
-        0.8, np.pi * (0.5),  # 5
-        1,0                  # 6
-    ]
-
-    curvepoints5 = [
-        0, 0,                 # 0
-        0.2, 0,               # 1
-        0.4, -np.pi * (0.5),   # 2
-        0.5, -np.pi * (0.25),  # 3
-        0.6, 0,               # 4
-        0.8, -np.pi * (0.5),   # 5
-        1,0                   # 6
-    ]
-
-    curvepoints6 = [
-        0, 0,                 # 0
-        0.2, 0,               # 1
-        0.4, np.pi * (0.5),   # 2
-        0.5, np.pi * (0.25),  # 3
-        0.6, 0,               # 4
-        0.8, np.pi * (0.5),   # 5
-        1,0                   # 6
-    ]
-
-    curvepoints7 = [
-        0, 0,                 # 0
-        0.2, np.pi/2,         # 1
-        0.4, np.pi * (0.25),  # 2
-        0.5, np.pi * (0.2),   # 3
-        0.6, np.pi * (0.1),   # 4
-        0.8, 0,               # 5
-        1,0                   # 6
-    ]
-
-    curvepoints8 = [
-        0, 0,                 # 0
-        0.2, 0,               # 1
-        0.4, np.pi * (0.5),   # 2
-        0.5, np.pi * (0.0),   # 3
-        0.6, np.pi * (0.5),   # 4
-        0.8, np.pi * (0.25),  # 5
-        1,0                   # 6
-    ]
-
-    curvepoints9 = [
-        0, 0,                 # 0
-        0.2, np.pi * 0.25,    # 1
-        0.4, np.pi * (0.0),   # 2
-        0.5, np.pi * (0.25),  # 3
-        0.6, np.pi * (0.10),  # 4
-        0.8, np.pi * (0.0),   # 5
-        1,0                   # 6
-    ]
-
-    bezierPoints = [
-        0, 0,               # 0
-        0.33, np.pi * 0.2,  # 1
-        0.66, -np.pi* 0.2,  # 2
-        1, 0                # 3
-    ]
-
-    bezierPoints2 = [
-        0, 0,                # 0
-        0.33, np.pi * 0.25,  # 1
-        0.66, -np.pi* 0.25,  # 2
-        1, 0                 # 3
-    ]
-
-    hermitePoints = [
-        0, 0,                # p1
-        1, 0,                # p2
-        0.947, 4 * np.pi, # t1
-        1.243, 3 * np.pi  # t2
-    ]
-
-    curvepoints10 = [
-        -0.2, -np.pi * 2, 0,      # 0
-        0, 0, 0,                  # 1
-        0.1, np.pi * .2, 0,       # 2
-        0.2, -np.pi * .2, 0,      # 3
-        0.4, np.pi * .2, 0,       # 4
-        0.5, -np.pi * .2, 0,      # 5
-        0.6, np.pi * .2, 0,       # 6
-        0.7, -np.pi * .2, 0,      # 7
-        0.8, np.pi * .2, 0,       # 8
-        1.0, 0, 0,                # 9
-        0.2, np.pi * 2, 0         # 10
-    ]
-
-    # Creacion de varios tipos de curvas
-    # Contempla Catmull-Rom, Bezier y Hermite
-    # La cantidad de puntos determina la velocidad
-    # a la cual las articulaciones se moveran
-    curve1 = evalCurveCR(800, curvepoints) # 1800  |  400
-    curve2 = evalCurveCR(800, curvepoints2)
-    curve3 = evalCurveCR(800, curvepoints3)
-    curve4 = evalCurveCR(800, curvepoints4)
-    curve5 = evalCurveCR(800, curvepoints5)
-    curve6 = evalCurveCR(800, curvepoints6)
-    curve7 = evalCurveCR(500, curvepoints7) # 900
-    curve8 = evalCurveCR(800, curvepoints8)
-    curve9 = evalCurveCR(500, curvepoints9)
-    curve10 = evalCurveCR9(800, curvepoints10)
-    cameraCurve = evalCurveCR9(1800, cameraPoints)
-    bezierCurve = evalCurveBezier(800, bezierPoints)
-    bezierCurve2 = evalCurveBezier(800, bezierPoints2)
-    hermiteCurve = evalCurveHermite(1800, hermitePoints)
-    mixedCurve = evalCurveHermiteAndBezier(800, hermitePoints, bezierPoints)
 
     Torus = createTextureGPUShapeX(createTextureTorus(50), CSphongTexPipeline, 
     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR, GL_NEAREST, 'sprites/metal.png')
@@ -535,7 +390,8 @@ if __name__ == "__main__":
     gpuBaby = createGPUShape(phongPipeline, shapeStick)
 
     dababy = sg.SceneGraphNode("baby")
-    dababy.transform = tr.matmul([tr.translate(3.9,0,-0.5),tr.rotationZ(np.pi),tr.rotationY(np.pi/2),tr.uniformScale(0.025)])
+    dababy.transform = tr.matmul([tr.translate(4.0,0,-0.5),tr.rotationZ(np.pi),tr.rotationY(np.pi/2),tr.uniformScale(0.025)])
+    #tr.matmul([tr.translate(3.9,0,-0.5),tr.rotationZ(np.pi),tr.rotationY(np.pi/2),tr.uniformScale(0.025)])
     dababy.childs = [gpuBaby]
 
     palitoNode = sg.SceneGraphNode("palito")
@@ -619,15 +475,6 @@ if __name__ == "__main__":
     aux_b = 0.5
 
     var = 0
-
-    # Set de curvas que las articulaciones van a utilizar
-    setOfCurvesLA = [curve1,curve3, curve5 ,curve7]
-    setOfCurvesRA = [curve1,curve4, curve6,curve7]
-    setOfCurvesLFA = [curve2,curve3, curve5 ,curve7]
-    setOfCurvesRFA = [curve2,curve4, curve6 ,curve7]
-    setOfCurvesRL = [curve8, bezierCurve, bezierCurve2, curve9]
-    setOfCurvesHR = [curve10, curve10, curve10, curve10]
-    setOfCurvesMixed = [mixedCurve, mixedCurve, mixedCurve, mixedCurve]
 
     # Abrir archivo JSON
 
@@ -762,7 +609,7 @@ if __name__ == "__main__":
         
         glUseProgram(lightingPipeline.shaderProgram)
 
-        palitoNode.transform = tr.matmul([tr.rotationZ(camera.theta), tr.translate(1.0,0,0)])
+        palitoNode.transform = tr.matmul([tr.translate(0.5,0,0),tr.rotationZ(camera.theta)])
         # White light in all components: ambient, diffuse and specular.
         if selta > 0.75:
             if var%3 == 0:
