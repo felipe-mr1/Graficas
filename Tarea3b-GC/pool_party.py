@@ -1,4 +1,4 @@
-from model import poolBall
+from model import poolBall, scoreHole
 from curves import evalCurveBezier, evalCurveCR, evalCurveCR9, evalCurveHermite, evalCurveHermiteAndBezier
 import glfw
 from OpenGL.GL import *
@@ -390,7 +390,7 @@ if __name__ == "__main__":
     gpuBaby = createGPUShape(phongPipeline, shapeStick)
 
     dababy = sg.SceneGraphNode("baby")
-    dababy.transform = tr.matmul([tr.translate(4.0,0,-0.5),tr.rotationZ(np.pi),tr.rotationY(np.pi/2),tr.uniformScale(0.025)])
+    dababy.transform = tr.matmul([tr.translate(4.0,0,-0.45),tr.rotationZ(np.pi),tr.rotationY(np.pi * 0.515),tr.uniformScale(0.025)])
     #tr.matmul([tr.translate(3.9,0,-0.5),tr.rotationZ(np.pi),tr.rotationY(np.pi/2),tr.uniformScale(0.025)])
     dababy.childs = [gpuBaby]
 
@@ -445,12 +445,16 @@ if __name__ == "__main__":
 
     gpuWhiteBall = createGPUShape(phongPipeline ,createColorNormalSphere(50, 1, 1, 1))
     whiteBallNode = sg.SceneGraphNode("White Ball")
-    whiteBallNode.transform = tr.matmul([tr.translate(0.5,0, -0.94),tr.uniformScale(0.04)])
+    whiteBallNode.transform = tr.matmul([tr.translate(0.5,0, -0.93),tr.uniformScale(0.04)])
     whiteBallNode.childs = [gpuWhiteBall]
 
     ballsNode = createPoolBalls(phongTexPipeline)
 
+    shadows = createShadows(mvpPipeline)
+
     table = createTable(phongPipeline)
+    
+    score = createCircleScore_v2(mvpPipeline)
 
     perfMonitor = pm.PerformanceMonitor(glfw.get_time(), 0.5)
     # glfw will swap buffers as soon as possible
@@ -470,9 +474,9 @@ if __name__ == "__main__":
     lnr_at= 0.03
     qud_at = 0.01
     shininess = 100
-    aux_r = 0.6
-    aux_g = 0.4
-    aux_b = 0.5
+    aux_r = 0.7
+    aux_g = 0.7
+    aux_b = 0.7
 
     var = 0
 
@@ -487,44 +491,75 @@ if __name__ == "__main__":
     # Buscando nodos
 
     ball1 = sg.findNode(ballsNode, "ball1")
-    bola1 = poolBall(0.04)
+    shadow1 = sg.findNode(shadows, "Shadow1")
+    bola1 = poolBall(0.04, rest, fric)
     bola1.set_model(ball1)
 
     ball2 = sg.findNode(ballsNode, "ball2")
-    bola2 = poolBall(0.04)
+    shadow2 = sg.findNode(shadows, "Shadow2")
+    bola2 = poolBall(0.04, rest, fric)
     bola2.set_model(ball2)
 
     ball3 = sg.findNode(ballsNode, "ball3")
-    bola3 = poolBall(0.04)
+    shadow3 = sg.findNode(shadows, "Shadow3")
+    bola3 = poolBall(0.04, rest, fric)
     bola3.set_model(ball3)
 
     ball4 = sg.findNode(ballsNode, "ball4")
-    bola4 = poolBall(0.04)
+    shadow4 = sg.findNode(shadows, "Shadow4")
+    bola4 = poolBall(0.04, rest, fric)
     bola4.set_model(ball4)
 
     ball5 = sg.findNode(ballsNode, "ball5")
-    bola5 = poolBall(0.04)
+    shadow5 = sg.findNode(shadows, "Shadow5")
+    bola5 = poolBall(0.04, rest, fric)
     bola5.set_model(ball5)
 
     ball6 = sg.findNode(ballsNode, "ball6")
-    bola6 = poolBall(0.04)
+    shadow6 = sg.findNode(shadows, "Shadow6")
+    bola6 = poolBall(0.04, rest, fric)
     bola6.set_model(ball6)
 
     ball7 = sg.findNode(ballsNode, "ball7")
-    bola7 = poolBall(0.04)
+    shadow7 = sg.findNode(shadows, "Shadow7")
+    bola7 = poolBall(0.04, rest, fric)
     bola7.set_model(ball7)
 
     ball8 = sg.findNode(ballsNode, "ball8")
-    bola8 = poolBall(0.04)
+    shadow8 = sg.findNode(shadows, "Shadow8")
+    bola8 = poolBall(0.04, rest, fric)
     bola8.set_model(ball8)
 
     ball9 = sg.findNode(ballsNode, "ball9")
-    bola9 = poolBall(0.04)
+    shadow9 = sg.findNode(shadows, "Shadow9")
+    bola9 = poolBall(0.04, rest, fric)
     bola9.set_model(ball9)
 
     ball10 = sg.findNode(ballsNode, "ball10")
-    bola10 = poolBall(0.04)
+    shadow10 = sg.findNode(shadows, "Shadow10")
+    bola10 = poolBall(0.04, rest, fric)
     bola10.set_model(ball10)
+
+    mainShadow = sg.findNode(shadows, "ShadowMain")
+
+    score1Node = sg.findNode(score, "Score 1")
+    score1 = scoreHole(0.1)
+    score1.set_model(score1Node)
+    score2Node = sg.findNode(score, "Score 2")
+    score2 = scoreHole(0.1)
+    score2.set_model(score2Node)
+    score3Node = sg.findNode(score, "Score 3")
+    score3 = scoreHole(0.1)
+    score3.set_model(score3Node)
+    score4Node = sg.findNode(score, "Score 4")
+    score4 = scoreHole(0.1)
+    score4.set_model(score4Node)
+    score5Node = sg.findNode(score, "Score 5")
+    score5 = scoreHole(0.1)
+    score5.set_model(score5Node)
+    score6Node = sg.findNode(score, "Score 6")
+    score6 = scoreHole(0.1)
+    score6.set_model(score6Node)
 
     # Application loop
     while not glfw.window_should_close(window):
@@ -551,11 +586,6 @@ if __name__ == "__main__":
         # Clearing the screen in both, color and depth
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-         # imgui function
-
-        #locationZ, la, ld, ls, cte_at, lnr_at, qud_at, shininess = \
-            #transformGuiOverlay(locationZ, la, ld, ls, cte_at, lnr_at, qud_at, shininess)
-
         # Filling or not the shapes depending on the controller state
         if (controller.fillPolygon):
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
@@ -578,12 +608,32 @@ if __name__ == "__main__":
              tr.matmul([tr.translate(0, -2.3, 0),tr.rotationX(np.pi/2), tr.uniformScale(0.5)])) # tr.identity
             #mvpPipeline.drawCall(gpuAxis, GL_LINES)
             mvpPipeline.drawCall(gpuHanger, GL_LINES)
+
+        glUseProgram(mvpPipeline.shaderProgram)
+        glUniformMatrix4fv(glGetUniformLocation(mvpPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
+        glUniformMatrix4fv(glGetUniformLocation(mvpPipeline.shaderProgram, "view"), 1, GL_TRUE, viewMatrix)
+        glUniformMatrix4fv(glGetUniformLocation(mvpPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
+        # las traslaciones son la posicion original (o actual) por el escalado del nodo de las bolas -> 0.08
+        shadow1.transform = tr.matmul([tr.translate(0,0,-0.935),tr.uniformScale(0.04)])
+        shadow2.transform = tr.matmul([tr.translate(-0.4 * 0.08,-0.3 * 0.08,-0.935),tr.uniformScale(0.04)])
+        shadow3.transform = tr.matmul([tr.translate(-0.4 * 0.08,0.3 * 0.08,-0.935),tr.uniformScale(0.04)])
+        shadow4.transform = tr.matmul([tr.translate(-0.9*0.08,-0.4*0.08,-0.935),tr.uniformScale(0.04)])
+        shadow5.transform = tr.matmul([tr.translate(-0.9*0.08,0,-0.935),tr.uniformScale(0.04)])
+        shadow6.transform = tr.matmul([tr.translate(-0.9*0.08,0.4*0.08,-0.935),tr.uniformScale(0.04)])
+        shadow7.transform = tr.matmul([tr.translate(-1.4*0.08,-0.7*0.08,-0.935),tr.uniformScale(0.04)])
+        shadow8.transform = tr.matmul([tr.translate(-1.4*0.08,-0.25*0.08,-0.935),tr.uniformScale(0.04)])
+        shadow9.transform = tr.matmul([tr.translate(-1.4*0.08,0.25*0.08,-0.935),tr.uniformScale(0.04)])
+        shadow10.transform = tr.matmul([tr.translate(-1.4*0.08,0.7* 0.08,-0.935),tr.uniformScale(0.04)])
+        mainShadow.transform = tr.matmul([tr.translate(0.5,0,-0.945),tr.uniformScale(0.04)])
+        sg.drawSceneGraphNode(shadows, mvpPipeline, "model")
+        sg.drawSceneGraphNode(score, mvpPipeline, "model")
         
         glUseProgram(shadowPipeline.shaderProgram)
         glUniformMatrix4fv(glGetUniformLocation(shadowPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
         glUniformMatrix4fv(glGetUniformLocation(shadowPipeline.shaderProgram, "view"), 1, GL_TRUE, viewMatrix)
         glUniformMatrix4fv(glGetUniformLocation(shadowPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
-        sg.drawSceneGraphNode(testNode, shadowPipeline, "model") 
+        #sg.drawSceneGraphNode(testNode, shadowPipeline, "model")
+        #sg.drawSceneGraphNode(score, shadowPipeline, "model")
 
         lightingPipeline = phongPipeline
         lightingPipeline2 = phongPipeline2

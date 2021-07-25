@@ -49,7 +49,7 @@ class articulation():
             self.model.transform = tr.matmul([tr.rotationX(self.pos[1])])
 
 class poolBall():
-    def __init__(self, aRadius):
+    def __init__(self, aRadius, coefRestitucion, friccion):
         self.radius = aRadius
 
     def set_model(self, new_model):
@@ -63,7 +63,7 @@ class poolBall():
 # tr.translate(self.finalTransform[0], self.finalTransform[1],self.finalTransform[2])
 
 class mainBall():
-    def __init__(self, aRadius):
+    def __init__(self, aRadius, coefRestitucion, friccion):
         self.radius = aRadius
 
     def set_model(self, new_model):
