@@ -23,7 +23,62 @@ import imgui
 from imgui.integrations.glfw import GlfwRenderer
 
 LIGHT_CEL_SHADING = 0
-LIGHT_PHONG   = 1
+LIGHT_PHONG = 1
+
+# Funciones del repositiorio del curso
+
+def rotate2D(vector, theta):
+    """
+    Direct application of a 2D rotation
+    """
+    sin_theta = np.sin(theta)
+    cos_theta = np.cos(theta)
+
+    return np.array([
+        cos_theta * vector[0] - sin_theta * vector[1],
+        sin_theta * vector[0] + cos_theta * vector[1]
+    ], dtype = np.float32)
+
+
+def collide(circle1, circle2):
+    """
+    If there are a collision between the circles, it modifies the velocity of
+    both circles in a way that preserves energy and momentum.
+    """
+    
+    normal = circle2.position - circle1.position
+    normal /= np.linalg.norm(normal)
+
+    circle1MovingToNormal = np.dot(circle2.velocity, normal) > 0.0
+    circle2MovingToNormal = np.dot(circle1.velocity, normal) < 0.0
+
+    if not (circle1MovingToNormal and circle2MovingToNormal):
+
+        # obtaining the tangent direction
+        tangent = rotate2D(normal, np.pi/2.0)
+
+        # Projecting the velocity vector over the normal and tangent directions
+        # for both circles, 1 and 2.
+        v1n = np.dot(circle1.velocity, normal) * normal
+        v1t = np.dot(circle1.velocity, tangent) * tangent
+
+        v2n = np.dot(circle2.velocity, normal) * normal
+        v2t = np.dot(circle2.velocity, tangent) * tangent
+
+        # swaping the normal components...
+        # this means that we applying energy and momentum conservation
+        circle1.velocity = v2n + v1t
+        circle2.velocity = v1n + v2t
+
+
+def areColliding(ball1, ball2):
+
+    difference = ball2.position - ball1.position
+    distance = np.linalg.norm(difference)
+    collisionDistance = ball2.radius + ball1.radius
+    return distance < collisionDistance
+
+    # Fin de funciones del repositorio del curso
 
 def readFaceVertex(faceDescription):
 
@@ -122,9 +177,6 @@ class PolarCamera:
         # x: self.rho *(np.cos(self.theta) / ((np.sin(self.theta)**2) + 1)) + self.center[0]
         # y: self.rho *((np.cos(self.theta) * np.sin(self.theta)) / ((np.sin(self.theta)**2)+ 1)) + self.center[1]
 
-        # Cardioide
-        # x: self.rho*(np.cos(self.theta)*(1 + np.cos(self.theta))) + 0.5
-        # y: self.rho * (np.sin(self.theta)*(1 + np.cos(self.theta))) + 0.5
         #self.eye[0] = self.rho *(np.cos(self.theta) / ((np.sin(self.theta)**2) + 1)) + self.center[0] #self.rho * np.sin(self.theta) + self.center[0]
         #self.eye[1] = self.rho *(((np.cos(self.theta) * np.sin(self.theta)) / ((np.sin(self.theta)**2)+ 1))) + 1.0 #self.rho * np.cos(self.theta) + self.center[1]
         #self.eye[2] = self.height + self.center[2]
@@ -189,6 +241,8 @@ class Controller:
 
         self.topView = False
 
+        self.hit = False
+
     def get_camera(self):
         return self.polar_camera
 
@@ -251,6 +305,12 @@ class Controller:
                 self.spotLight = True
             elif action == glfw.RELEASE:
                 self.spotLight = False
+
+        if key == glfw.KEY_Z:
+            if action == glfw.PRESS:
+                self.hit = True
+            elif action == glfw.RELEASE:
+                self.hit = False
 
         elif key == glfw.KEY_LEFT_CONTROL:
             if action == glfw.PRESS:
@@ -492,53 +552,57 @@ if __name__ == "__main__":
 
     ball1 = sg.findNode(ballsNode, "ball1")
     shadow1 = sg.findNode(shadows, "Shadow1")
-    bola1 = poolBall(0.04, rest, fric)
+    bola1 = poolBall(0.04, rest, fric, [0,0], [0,0])
     bola1.set_model(ball1)
 
     ball2 = sg.findNode(ballsNode, "ball2")
     shadow2 = sg.findNode(shadows, "Shadow2")
-    bola2 = poolBall(0.04, rest, fric)
+    bola2 = poolBall(0.04, rest, fric,[-0.4 * 0.08,-0.3 * 0.08],[0,0])
     bola2.set_model(ball2)
 
     ball3 = sg.findNode(ballsNode, "ball3")
     shadow3 = sg.findNode(shadows, "Shadow3")
-    bola3 = poolBall(0.04, rest, fric)
+    bola3 = poolBall(0.04, rest, fric,[-0.4 * 0.08, 0.3 * 0.08],[0,0])
     bola3.set_model(ball3)
 
     ball4 = sg.findNode(ballsNode, "ball4")
     shadow4 = sg.findNode(shadows, "Shadow4")
-    bola4 = poolBall(0.04, rest, fric)
+    bola4 = poolBall(0.04, rest, fric,[-0.9*0.08,-0.4*0.08],[0,0])
     bola4.set_model(ball4)
 
     ball5 = sg.findNode(ballsNode, "ball5")
     shadow5 = sg.findNode(shadows, "Shadow5")
-    bola5 = poolBall(0.04, rest, fric)
+    bola5 = poolBall(0.04, rest, fric,[-0.9*0.08, 0],[0,0])
     bola5.set_model(ball5)
 
     ball6 = sg.findNode(ballsNode, "ball6")
     shadow6 = sg.findNode(shadows, "Shadow6")
-    bola6 = poolBall(0.04, rest, fric)
+    bola6 = poolBall(0.04, rest, fric,[-0.9*0.08, 0.4*0.08],[0,0])
     bola6.set_model(ball6)
 
     ball7 = sg.findNode(ballsNode, "ball7")
     shadow7 = sg.findNode(shadows, "Shadow7")
-    bola7 = poolBall(0.04, rest, fric)
+    bola7 = poolBall(0.04, rest, fric,[-1.4*0.08,-0.7*0.08],[0,0])
     bola7.set_model(ball7)
 
     ball8 = sg.findNode(ballsNode, "ball8")
     shadow8 = sg.findNode(shadows, "Shadow8")
-    bola8 = poolBall(0.04, rest, fric)
+    bola8 = poolBall(0.04, rest, fric,[-1.4*0.08,-0.25*0.08],[0,0])
     bola8.set_model(ball8)
 
     ball9 = sg.findNode(ballsNode, "ball9")
     shadow9 = sg.findNode(shadows, "Shadow9")
-    bola9 = poolBall(0.04, rest, fric)
+    bola9 = poolBall(0.04, rest, fric,[-1.4*0.08, 0.25*0.08],[0,0])
     bola9.set_model(ball9)
 
     ball10 = sg.findNode(ballsNode, "ball10")
     shadow10 = sg.findNode(shadows, "Shadow10")
-    bola10 = poolBall(0.04, rest, fric)
+    bola10 = poolBall(0.04, rest, fric,[-1.4*0.08, 0.7*0.08],[0,0])
     bola10.set_model(ball10)
+
+    bolaBlanca = poolBall(0.4, rest, fric, [0, 0], [0, 0])
+    bolaBlanca.set_model(whiteBallNode)
+    bolaBlanca.set_controller(controller)
 
     mainShadow = sg.findNode(shadows, "ShadowMain")
 
@@ -624,7 +688,7 @@ if __name__ == "__main__":
         shadow8.transform = tr.matmul([tr.translate(-1.4*0.08,-0.25*0.08,-0.935),tr.uniformScale(0.04)])
         shadow9.transform = tr.matmul([tr.translate(-1.4*0.08,0.25*0.08,-0.935),tr.uniformScale(0.04)])
         shadow10.transform = tr.matmul([tr.translate(-1.4*0.08,0.7* 0.08,-0.935),tr.uniformScale(0.04)])
-        mainShadow.transform = tr.matmul([tr.translate(0.5,0,-0.945),tr.uniformScale(0.04)])
+        mainShadow.transform = tr.matmul([tr.translate(bolaBlanca.position[0], bolaBlanca.position[1], 0),tr.translate(0.5,0,-0.945),tr.uniformScale(0.04)])
         sg.drawSceneGraphNode(shadows, mvpPipeline, "model")
         sg.drawSceneGraphNode(score, mvpPipeline, "model")
         
@@ -632,13 +696,10 @@ if __name__ == "__main__":
         glUniformMatrix4fv(glGetUniformLocation(shadowPipeline.shaderProgram, "projection"), 1, GL_TRUE, projection)
         glUniformMatrix4fv(glGetUniformLocation(shadowPipeline.shaderProgram, "view"), 1, GL_TRUE, viewMatrix)
         glUniformMatrix4fv(glGetUniformLocation(shadowPipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
-        #sg.drawSceneGraphNode(testNode, shadowPipeline, "model")
-        #sg.drawSceneGraphNode(score, shadowPipeline, "model")
 
         lightingPipeline = phongPipeline
         lightingPipeline2 = phongPipeline2
         texPipeline = CSphongTexPipeline
-        #lightposition = [1*np.cos(t1), 1*np.sin(t1), 2.3]
         lightposition = [0, 0, locationZ]
 
         if controller.lightingModel == LIGHT_CEL_SHADING:
@@ -706,6 +767,15 @@ if __name__ == "__main__":
         
         
         glUseProgram(texPipeline.shaderProgram)
+
+        if controller.hit and bolaBlanca.detenida:
+            bolaBlanca.detenida = False
+            bolaBlanca.velocity = [-2 * np.cos(camera.theta), -2 * np.sin(camera.theta)]
+            print(bolaBlanca.velocity)
+        
+        bolaBlanca.action(delta)
+        bolaBlanca.borderCollide()
+
         # White light in all components: ambient, diffuse and specular.
         glUniform3f(glGetUniformLocation(texPipeline.shaderProgram, "La"), aux_r, aux_g, aux_b)
         glUniform3f(glGetUniformLocation(texPipeline.shaderProgram, "Ld"), aux_r, aux_g, aux_b)
@@ -737,7 +807,6 @@ if __name__ == "__main__":
         glUniform3f(glGetUniformLocation(texPipeline.shaderProgram, "Ks"), 1.0, 1.0, 1.0)
 
         sg.drawSceneGraphNode(torusNode, texPipeline, "model")
-
         
         glUseProgram(CSspotlightPipeline.shaderProgram)
         # Light in all components: ambient, diffuse and specular.

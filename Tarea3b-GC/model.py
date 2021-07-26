@@ -5,52 +5,25 @@ import numpy as np
 import random as rd
 import grafica.transformations as tr
 
-# class for each articulation
-# works with the curves and model given
-# in charge of the movement of each model
-class articulation():
-    def __init__(self, aSetOfCurves):
-        self.curve = aSetOfCurves[0]
-        self.index = 0
-        self.pos = self.curve[0]
-        self.j = 0
-        self.setOfCurves = aSetOfCurves
-        self.lastTransform = 0
+def sentido(velocity):
+    if velocity > 0:
+        return -9.8
+    else:
+        return 9.8
 
-    def move(self):
-        if self.index < len(self.curve) -2:
-            self.index += 1
-            self.pos = self.curve[self.index]
-        else:
-            self.j += 1
-            self.curve = self.setOfCurves[self.j % 4]
-            self.index = 0
-    
-    def set_model(self, new_model):
-        # Se obtiene una referencia a uno nodo
-        self.model = new_model
-        self.transform = self.model.transform
-
-    def set_controller(self, new_controller):
-        # Se obtiene la referncia al controller
-        self.controller = new_controller
-    
-    def update(self):
-        if self.j % 4 == 0:
-            self.model.transform = tr.matmul([tr.rotationX(self.pos[1])]) # self.transform
-            self.transform1 = tr.rotationX(self.pos[1])
-        elif self.j % 4 == 1:
-            self.model.transform = tr.matmul([tr.rotationY(self.pos[1]), self.transform1])
-            self.transform2 = tr.matmul([tr.rotationY(self.pos[1]), self.transform1])
-        elif self.j % 4 == 2:
-            self.model.transform = tr.matmul([tr.rotationZ(self.pos[1]), self.transform2])
-            self.transform3 = tr.matmul([tr.rotationZ(self.pos[1]), self.transform2])
-        else: # self.j % 4 == 3
-            self.model.transform = tr.matmul([tr.rotationX(self.pos[1])])
+def detenida(velocidadX, velocidadY):
+    return velocidadX == 0 and velocidadY == 0
 
 class poolBall():
-    def __init__(self, aRadius, coefRestitucion, friccion):
+    def __init__(self, aRadius, coefRestitucion, friccion, position, velocity):
         self.radius = aRadius
+        self.gravityAceleration = 9.8
+        self.coefRestitucion = coefRestitucion
+        self.friccion = friccion
+        self.position = position
+        self.velocity = velocity
+        self.model = None
+        self.detenida = True
 
     def set_model(self, new_model):
         # Se obtiene una referencia a uno nodo
@@ -60,36 +33,40 @@ class poolBall():
     def set_controller(self, new_controller):
         # Se obtiene la referncia al controller
         self.controller = new_controller
-# tr.translate(self.finalTransform[0], self.finalTransform[1],self.finalTransform[2])
 
-class mainBall():
-    def __init__(self, aRadius, coefRestitucion, friccion):
-        self.radius = aRadius
+    def action(self, deltaTime):
+        # Euler integration
+        gravedad_0 = sentido(self.velocity[0])
+        if abs(self.velocity[0]) > 0.1:
+            self.velocity[0] += deltaTime * (gravedad_0 * self.friccion)
+        else:
+            self.velocity[0] = 0
+        gravedad_1 = sentido(self.velocity[1])
+        if abs(self.velocity[1]) > 0.1:
+            self.velocity[1] += deltaTime * (gravedad_1 * self.friccion)
+        else:
+            self.velocity[1] = 0
+        self.position[0] += self.velocity[0] * deltaTime
+        self.position[1] += self.velocity[1] * deltaTime
+        self.model.transform = tr.matmul([tr.translate(self.position[0], self.position[1], 0), self.transform])
+        self.detenida = detenida(self.velocity[0], self.velocity[1])
+        #self.model.transform = tr.matmul([self.transform])
+        #print(self.velocity[0])
 
-    def set_model(self, new_model):
-        # Se obtiene una referencia a uno nodo
-        self.model = new_model
-        self.transform = self.model.transform
+    def borderCollide(self):
+        if self.position[0] + self.radius < -1.0:
+            self.velocity[0] = abs(self.velocity[0] * self.coefRestitucion)
 
-    def set_controller(self, new_controller):
-        # Se obtiene la referncia al controller
-        self.controller = new_controller
-# tr.translate(self.finalTransform[0], self.finalTransform[1],self.finalTransform[2])
+        if self.position[0]  > 1.0 + self.radius:
+            self.velocity[0] = -abs(self.velocity[0] * self.coefRestitucion)
+
+        if self.position[1] + self.radius < -0.05:
+            self.velocity[1] = abs(self.velocity[1] * self.coefRestitucion)
+
+        if self.position[1]  > 0.05 + self.radius:
+            self.velocity[1] = -abs(self.velocity[1] * self.coefRestitucion)
 
 class scoreHole():
-    def __init__(self, aRadius):
-        self.radius = aRadius
-
-    def set_model(self, new_model):
-        # Se obtiene una referencia a uno nodo
-        self.model = new_model
-        self.transform = self.model.transform
-
-    def set_controller(self, new_controller):
-        # Se obtiene la referncia al controller
-        self.controller = new_controller
-
-class tacoPalo():
     def __init__(self, aRadius):
         self.radius = aRadius
 

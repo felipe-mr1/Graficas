@@ -1,6 +1,5 @@
 """Funciones para crear distintas figuras y escenas en 3D """
 
-from model import articulation
 import numpy as np
 import math
 from OpenGL.GL import *
