@@ -434,38 +434,6 @@ def createPoolBalls(pipeline):
 
     return setOfBalls
 
-def createCircleScores(pipeline):
-    gpuScore = createTextureGPUShape(bs.createTextureQuad(1,1), pipeline, "sprites/blacko2.png")
-
-    score1Node = sg.SceneGraphNode("Score 1")
-    score1Node.transform = tr.matmul([tr.translate(0.9,-0.45,-0.93),tr.uniformScale(0.1)])
-    score1Node.childs = [gpuScore]
-
-    score2Node = sg.SceneGraphNode("Score 2")
-    score2Node.transform = tr.matmul([tr.translate(0.9, 0.45,-0.93),tr.uniformScale(0.1)])
-    score2Node.childs = [gpuScore]
-
-    score3Node = sg.SceneGraphNode("Score 3")
-    score3Node.transform = tr.matmul([tr.translate(0.0,-0.45,-0.93),tr.uniformScale(0.1)])
-    score3Node.childs = [gpuScore]
-
-    score4Node = sg.SceneGraphNode("Score 4")
-    score4Node.transform = tr.matmul([tr.translate(0.0, 0.45,-0.93),tr.uniformScale(0.1)])
-    score4Node.childs = [gpuScore]
-
-    score5Node = sg.SceneGraphNode("Score 5")
-    score5Node.transform = tr.matmul([tr.translate(-0.9,-0.45,-0.93),tr.uniformScale(0.1)])
-    score5Node.childs = [gpuScore]
-
-    score6Node = sg.SceneGraphNode("Score 6")
-    score6Node.transform = tr.matmul([tr.translate(-0.9, 0.45,-0.93),tr.uniformScale(0.1)])
-    score6Node.childs = [gpuScore]
-
-    scoreNode = sg.SceneGraphNode("Scores")
-    scoreNode.childs = [score1Node, score2Node, score3Node, score4Node, score5Node, score6Node]
-
-    return scoreNode
-
 def createCircleScore_v2(pipeline):
     gpuScore = createGPUShape(pipeline, createBlackCircle(64))
 

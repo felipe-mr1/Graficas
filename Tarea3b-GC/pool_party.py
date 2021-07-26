@@ -450,7 +450,7 @@ if __name__ == "__main__":
     gpuBaby = createGPUShape(phongPipeline, shapeStick)
 
     dababy = sg.SceneGraphNode("baby")
-    dababy.transform = tr.matmul([tr.translate(4.0,0,-0.45),tr.rotationZ(np.pi),tr.rotationY(np.pi * 0.515),tr.uniformScale(0.025)])
+    dababy.transform = tr.matmul([tr.translate(4.1,0,-0.45),tr.rotationZ(np.pi),tr.rotationY(np.pi * 0.515),tr.uniformScale(0.025)])
     #tr.matmul([tr.translate(3.9,0,-0.5),tr.rotationZ(np.pi),tr.rotationY(np.pi/2),tr.uniformScale(0.025)])
     dababy.childs = [gpuBaby]
 
@@ -600,6 +600,8 @@ if __name__ == "__main__":
     bola10 = poolBall(0.04, rest, fric,[-1.4*0.08, 0.7*0.08],[0,0])
     bola10.set_model(ball10)
 
+    bolas = [bola1, bola2, bola3, bola4, bola5, bola6, bola7, bola8, bola9, bola10]
+
     bolaBlanca = poolBall(0.4, rest, fric, [0, 0], [0, 0])
     bolaBlanca.set_model(whiteBallNode)
     bolaBlanca.set_controller(controller)
@@ -640,7 +642,7 @@ if __name__ == "__main__":
 
         controller.update_camera(delta)
         camera = controller.get_camera()
-        viewMatrix = camera.update_view(0.5, 0)
+        viewMatrix = camera.update_view(bolaBlanca.position[0], bolaBlanca.position[1])
         if controller.topView:
             viewMatrix = camera.upperView()
 
@@ -655,9 +657,6 @@ if __name__ == "__main__":
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
         else:
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
-
-        if (controller.slowMotion):
-            sleep(0.03)
 
         if (controller.autoCameraView):
             viewMatrix = camera.update_autoview()
@@ -720,7 +719,9 @@ if __name__ == "__main__":
         
         glUseProgram(lightingPipeline.shaderProgram)
 
-        palitoNode.transform = tr.matmul([tr.translate(0.5,0,0),tr.rotationZ(camera.theta)])
+        # demas saco la primera traslacion
+        #tr.translate(bolaBlanca.position[0], bolaBlanca.position[1], 0)
+        palitoNode.transform = tr.matmul([tr.translate(bolaBlanca.position[0], bolaBlanca.position[1], 0),tr.translate(0.5,0,0),tr.rotationZ(camera.theta)])
         # White light in all components: ambient, diffuse and specular.
         if selta > 0.75:
             if var%3 == 0:
@@ -770,11 +771,18 @@ if __name__ == "__main__":
 
         if controller.hit and bolaBlanca.detenida:
             bolaBlanca.detenida = False
-            bolaBlanca.velocity = [-2 * np.cos(camera.theta), -2 * np.sin(camera.theta)]
-            print(bolaBlanca.velocity)
+            bolaBlanca.velocity = [-5 * np.cos(camera.theta), -5 * np.sin(camera.theta)]
         
         bolaBlanca.action(delta)
         bolaBlanca.borderCollide()
+
+        # Parte por implementar, falta desarrollar
+        """
+        for i in range(len(bolas)):
+                for j in range(i+1, len(bolas)):
+                    if areColliding(bolas[i], bolas[j]):
+                        collide(bolas[i], bolas[j])
+        """
 
         # White light in all components: ambient, diffuse and specular.
         glUniform3f(glGetUniformLocation(texPipeline.shaderProgram, "La"), aux_r, aux_g, aux_b)
@@ -868,8 +876,6 @@ if __name__ == "__main__":
     gpuAxis.clear()
     #impl.shutdown()
     scene.clear()
-    #cube1.clear()
-    #cube2.clear()
     screenNode.clear()
     screen2Node.clear()
     torusNode.clear()

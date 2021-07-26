@@ -50,8 +50,7 @@ class poolBall():
         self.position[1] += self.velocity[1] * deltaTime
         self.model.transform = tr.matmul([tr.translate(self.position[0], self.position[1], 0), self.transform])
         self.detenida = detenida(self.velocity[0], self.velocity[1])
-        #self.model.transform = tr.matmul([self.transform])
-        #print(self.velocity[0])
+
 
     def borderCollide(self):
         if self.position[0] + self.radius < -1.0:
