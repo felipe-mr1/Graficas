@@ -30,7 +30,7 @@ En el siguiente gif se puede visualizar el estado final del juego
 
 # Tarea 2
 
-Informe del estado final de esta entrega [aqui](informes/Reporte&20Grafica&20T2b.pdf)
+Informe del estado final de esta entrega [aqui](https://github.com/felipe-mr1/Graficas/blob/7bd3dda55274636627cfe6a7344cb5cb693a23cb/informes/Reporte%20Gr%C3%A1fica%20T2b.pdf)
 
 ## Motivación y objetivo
 
@@ -50,7 +50,7 @@ En el siguiente gif se puede visualizar el estado final del programa
 
 # Tarea 3
 
-Informe del estado final de esta entrega [aqui](informes/Reporte&20Grafica&20t1b.pdf)
+Informe del estado final de esta entrega [aqui](https://github.com/felipe-mr1/Graficas/blob/7bd3dda55274636627cfe6a7344cb5cb693a23cb/informes/Reporte%20Grafica%20t3b.pdf)
 
 ## Motivación y objetivo
 
