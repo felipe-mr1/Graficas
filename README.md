@@ -8,7 +8,7 @@ Aquí se pueden encontrar los ejercicios que se realizaran a lo largo del curso.
 
 # Tarea 1
 
-Informe del estado final de esta entrega [aqui](informes/Reporte&20Grafica&20t1a.pdf)
+Informe del estado final de esta entrega [aqui](https://github.com/felipe-mr1/Graficas/blob/ed0551d55561c1b1d9ef7f45e397facdacd19703/informes/Reporte%20Grafica%20t1a.pdf)
 
 ## Motivación y objetivo
 
